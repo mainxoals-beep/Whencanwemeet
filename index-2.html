@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>일정 투표 도구</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<style>
+  :root{
+    --purple:#7C6AE6; --purpleDark:#5B4B9A; --terracotta:#E07A5F;
+    --ivory:#FAF8F4; --ink:#2B2438; --line:#E8E4F0; --gray:#8A8398;
+    --green:#3E9A6D; --redbg:#FCEDEA; --red:#B14A34;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ivory);font-family:'Pretendard','Noto Sans KR',-apple-system,sans-serif;color:var(--ink);}
+  .wrap{max-width:460px;margin:0 auto;padding:28px 16px 60px;}
+  .eyebrow{display:flex;align-items:center;gap:6px;color:var(--gray);font-size:12px;letter-spacing:.5px;margin-bottom:4px;}
+  h1{font-size:21px;font-weight:800;margin:0 0 20px;line-height:1.35;}
+  .tabs{display:flex;gap:4px;background:#F0ECFB;padding:4px;border-radius:16px;margin-bottom:18px;}
+  .tab{flex:1;padding:9px 0;border:none;background:transparent;border-radius:12px;font-size:13px;font-weight:700;color:var(--purpleDark);cursor:pointer;transition:.15s;}
+  .tab.active{background:var(--purple);color:#fff;}
+  .card{background:#fff;border-radius:16px;padding:16px;border:1px solid var(--line);}
+  .section-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:22px 0 10px;color:var(--ink);}
+  .section-label:first-child{margin-top:0;}
+  select.name-select{width:100%;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);padding:4px 0 0;outline:none;}
+  .name-label{font-size:12px;color:var(--gray);font-weight:600;}
+  .notice{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:12px;background:#F0ECFB;color:var(--purpleDark);display:flex;gap:6px;align-items:center;}
+  .error-box{margin-bottom:14px;padding:10px 12px;border-radius:12px;font-size:13px;background:var(--redbg);color:var(--red);display:flex;gap:6px;align-items:center;}
+
+  /* Calendar */
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .cal-header button{border:none;background:#F0ECFB;color:var(--purpleDark);width:28px;height:28px;border-radius:8px;font-weight:800;cursor:pointer;}
+  .cal-title{font-size:14px;font-weight:800;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-wd{text-align:center;font-size:10px;color:var(--gray);font-weight:700;padding-bottom:4px;}
+  .cal-day{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .cal-day.empty{visibility:hidden;cursor:default;}
+  .cal-day.disabled{color:#D8D0E0;background:#FAF8FC;cursor:not-allowed;}
+  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .cal-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .quick-btn{padding:9px 0;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
+  .quick-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .quick-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+
+  /* Time grid */
+  .time-presets{display:flex;gap:6px;margin-bottom:8px;}
+  .preset-btn{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
+  .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;touch-action:none;user-select:none;}
+  .time-cell{padding:10px 0;border-radius:10px;border:1px solid var(--line);background:#fff;text-align:center;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;}
+  .time-cell.active{background:var(--terracotta);color:#fff;border-color:var(--terracotta);}
+  .time-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+
+  /* Region map */
+  #mapbox{width:100%;height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+  #resultMapbox{width:100%;height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+  .region-label{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
+  .region-label::before{display:none;}
+  .region-picked{margin-top:10px;font-size:12px;color:var(--purpleDark);font-weight:700;}
+  .region-hint{font-size:11px;color:var(--gray);margin-top:4px;}
+
+  textarea.memo{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:13px;color:var(--ink);resize:none;outline:none;font-family:inherit;}
+
+  .submit-btn{width:100%;margin-top:24px;padding:14px 0;border-radius:14px;border:none;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--ink);color:#fff;}
+  .submit-btn:disabled{background:var(--line);color:var(--gray);cursor:not-allowed;}
+  .helper{text-align:center;font-size:11px;color:var(--gray);margin-top:6px;}
+
+  /* Results */
+  .stat-hero{background:var(--ink);border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .stat-hero .lbl{color:#C9BFF0;font-size:12px;font-weight:600;}
+  .stat-hero .val{color:#fff;font-size:19px;font-weight:800;}
+  .rec-card{border-radius:16px;padding:16px;border:1px solid var(--line);background:#fff;margin-bottom:18px;}
+  .rec-title{font-size:12px;color:var(--terracotta);font-weight:800;margin-bottom:6px;}
+  .rec-main{display:flex;align-items:baseline;gap:10px;}
+  .rec-date{font-size:22px;font-weight:800;}
+  .rec-time{font-size:19px;font-weight:800;color:var(--purple);}
+  .rec-sub{font-size:12px;color:var(--gray);margin-top:4px;}
+  .bar-row-wrap{margin-bottom:10px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
+  .bar-names{font-size:11px;color:var(--gray);padding-left:28px;margin-top:-4px;}
+  .bar-rank{width:16px;font-size:11px;font-weight:800;color:var(--gray);}
+  .bar-rank.top{color:var(--terracotta);}
+  .bar-label{width:78px;font-size:12px;font-weight:700;}
+  .bar-track{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;}
+  .bar-count{width:40px;text-align:right;font-size:11px;font-weight:800;}
+  .heatmap-wrap{overflow-x:auto;}
+  .heatmap-row{display:flex;align-items:center;margin-bottom:3px;}
+  .heatmap-date{width:52px;font-size:11px;font-weight:700;flex-shrink:0;}
+  .heatmap-cell{width:30px;height:22px;margin:0 2px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
+  .heatmap-hdr{display:flex;padding-left:52px;margin-bottom:4px;}
+  .heatmap-hcell{width:30px;margin:0 2px;text-align:center;font-size:9px;color:var(--gray);flex-shrink:0;}
+  .empty-note{text-align:center;padding:40px 0;color:var(--gray);font-size:13px;}
+
+  /* Admin */
+  .gate{text-align:center;padding:30px 20px;margin-top:6px;}
+  .gate .t{font-size:13px;font-weight:700;margin-top:8px;}
+  .gate .s{font-size:12px;color:var(--gray);margin-top:4px;}
+  .admin-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line);}
+  .admin-row:first-child{border-top:none;}
+  .voted{color:var(--green);font-size:12px;font-weight:700;}
+  .notvoted{color:var(--terracotta);font-size:12px;font-weight:700;}
+  .detail-card{border-radius:12px;padding:10px 12px;border:1px solid var(--line);background:#fff;margin-bottom:8px;}
+  .refresh-link{background:none;border:none;color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .code-chip{background:#F0ECFB;border:none;color:var(--purpleDark);font-size:12px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:999px;}
+  .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .missing-box{margin-top:14px;padding:10px 12px;border-radius:12px;font-size:12px;background:var(--redbg);color:var(--red);}
+  .loading{text-align:center;padding:80px 0;color:var(--gray);}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+(function(){
+  function getTimes(){
+    const cfg = state.roomConfig;
+    const start = (cfg && Number.isInteger(cfg.hourStart)) ? cfg.hourStart : 10;
+    const end = (cfg && Number.isInteger(cfg.hourEnd)) ? cfg.hourEnd : 21;
+    const arr = [];
+    for(let h=start; h<=end; h++){ arr.push(`${String(h).padStart(2,"0")}:00`); }
+    return arr;
+  }
+  const WD = ["일","월","화","수","목","금","토"];
+  const REGIONS = [
+    // 서울 25개구
+    {name:"종로구", area:"서울", lat:37.5735, lng:126.9788},
+    {name:"중구", area:"서울", lat:37.5641, lng:126.9979},
+    {name:"용산구", area:"서울", lat:37.5326, lng:126.9903},
+    {name:"성동구", area:"서울", lat:37.5636, lng:127.0366},
+    {name:"광진구", area:"서울", lat:37.5385, lng:127.0823},
+    {name:"동대문구", area:"서울", lat:37.5744, lng:127.0396},
+    {name:"중랑구", area:"서울", lat:37.6063, lng:127.0925},
+    {name:"성북구", area:"서울", lat:37.5894, lng:127.0167},
+    {name:"강북구", area:"서울", lat:37.6396, lng:127.0257},
+    {name:"도봉구", area:"서울", lat:37.6688, lng:127.0471},
+    {name:"노원구", area:"서울", lat:37.6542, lng:127.0568},
+    {name:"은평구", area:"서울", lat:37.6027, lng:126.9291},
+    {name:"서대문구", area:"서울", lat:37.5791, lng:126.9368},
+    {name:"마포구", area:"서울", lat:37.5663, lng:126.9019},
+    {name:"양천구", area:"서울", lat:37.5169, lng:126.8664},
+    {name:"강서구", area:"서울", lat:37.5509, lng:126.8495},
+    {name:"구로구", area:"서울", lat:37.4954, lng:126.8874},
+    {name:"금천구", area:"서울", lat:37.4519, lng:126.9020},
+    {name:"영등포구", area:"서울", lat:37.5264, lng:126.8963},
+    {name:"동작구", area:"서울", lat:37.5124, lng:126.9393},
+    {name:"관악구", area:"서울", lat:37.4784, lng:126.9516},
+    {name:"서초구", area:"서울", lat:37.4837, lng:127.0324},
+    {name:"강남구", area:"서울", lat:37.5172, lng:127.0473},
+    {name:"송파구", area:"서울", lat:37.5145, lng:127.1059},
+    {name:"강동구", area:"서울", lat:37.5301, lng:127.1238},
+    // 경기 31개시군
+    {name:"수원시", area:"경기", lat:37.2636, lng:127.0286},
+    {name:"성남시", area:"경기", lat:37.4200, lng:127.1265},
+    {name:"의정부시", area:"경기", lat:37.7381, lng:127.0337},
+    {name:"안양시", area:"경기", lat:37.3943, lng:126.9568},
+    {name:"부천시", area:"경기", lat:37.5035, lng:126.7660},
+    {name:"광명시", area:"경기", lat:37.4786, lng:126.8646},
+    {name:"평택시", area:"경기", lat:36.9921, lng:127.1129},
+    {name:"동두천시", area:"경기", lat:37.9036, lng:127.0606},
+    {name:"안산시", area:"경기", lat:37.3218, lng:126.8309},
+    {name:"고양시", area:"경기", lat:37.6584, lng:126.8320},
+    {name:"과천시", area:"경기", lat:37.4292, lng:126.9877},
+    {name:"구리시", area:"경기", lat:37.5943, lng:127.1296},
+    {name:"남양주시", area:"경기", lat:37.6360, lng:127.2165},
+    {name:"오산시", area:"경기", lat:37.1499, lng:127.0772},
+    {name:"시흥시", area:"경기", lat:37.3799, lng:126.8031},
+    {name:"군포시", area:"경기", lat:37.3616, lng:126.9351},
+    {name:"의왕시", area:"경기", lat:37.3446, lng:126.9683},
+    {name:"하남시", area:"경기", lat:37.5393, lng:127.2148},
+    {name:"용인시", area:"경기", lat:37.2410, lng:127.1776},
+    {name:"파주시", area:"경기", lat:37.7599, lng:126.7802},
+    {name:"이천시", area:"경기", lat:37.2721, lng:127.4350},
+    {name:"안성시", area:"경기", lat:37.0079, lng:127.2797},
+    {name:"김포시", area:"경기", lat:37.6152, lng:126.7159},
+    {name:"화성시", area:"경기", lat:37.1996, lng:126.8317},
+    {name:"광주시", area:"경기", lat:37.4293, lng:127.2551},
+    {name:"양주시", area:"경기", lat:37.7852, lng:127.0459},
+    {name:"포천시", area:"경기", lat:37.8949, lng:127.2003},
+    {name:"여주시", area:"경기", lat:37.2984, lng:127.6378},
+    {name:"연천군", area:"경기", lat:38.0966, lng:127.0748},
+    {name:"가평군", area:"경기", lat:37.8315, lng:127.5095},
+    {name:"양평군", area:"경기", lat:37.4917, lng:127.4874},
+  ];
+  const TODAY = new Date(2026,6,23); // 2026-07-23
+  const DB_URL = "https://whencanwemeet-7e698-default-rtdb.firebaseio.com";
+
+  const state = {
+    screen: "vote",
+    roomCode: null,
+    roomConfig: null, // { title, members }
+    currentUser: "",
+    draft: { dates: [], times: [], regions: [], memo: "" },
+    allVotes: {},
+    loading: true,
+    saving: false,
+    saved: false,
+    error: "",
+    calYear: 2026,
+    calMonth: 7, // August (0-indexed)
+    map: null,
+    markers: {},
+    quickActive: new Set(),
+    landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" },
+    pinInput: "",
+    pinChangeMode: false,
+    newPinInput: "",
+  };
+
+  const app = document.getElementById("app");
+  const pad = n => String(n).padStart(2,"0");
+  const dkey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+  const fmtLabel = (key) => { const [y,m,d]=key.split("-").map(Number); return `${m}/${d}`; };
+  const weekdayOf = (key) => { const [y,m,d]=key.split("-").map(Number); return WD[new Date(y,m-1,d).getDay()]; };
+
+  function toDraft(existing){
+    if(!existing) return { dates:[], times:[], regions:[], memo:"" };
+    const regions = existing.regions ? existing.regions.slice() : (existing.region ? [existing.region] : []);
+    return { dates:(existing.dates||[]).slice(), times:(existing.times||[]).slice(), regions, memo: existing.memo||"" };
+  }
+
+  // "create" = no vote yet (or an old vote with no pin) -> user sets a new 4-digit pin.
+  // "verify" = a vote with a pin already exists -> user must type the matching pin to edit/resubmit.
+  function getPinMode(){
+    const existing = state.currentUser ? state.allVotes[state.currentUser] : null;
+    return (existing && existing.pin) ? "verify" : "create";
+  }
+
+  function isPinValid(){
+    if(!state.currentUser) return false;
+    if(getPinMode()==="verify"){
+      const existing = state.allVotes[state.currentUser];
+      const currentOk = state.pinInput === existing.pin;
+      if(!currentOk) return false;
+      if(state.pinChangeMode) return /^\d{4}$/.test(state.newPinInput);
+      return true;
+    }
+    return /^\d{4}$/.test(state.pinInput);
+  }
+
+  // Gates whether the rest of the form (dates/times/regions/memo/submit) is even shown.
+  // "create" mode has nothing to protect yet, so it's open right away.
+  // "verify" mode (already voted) requires the correct 4-digit pin before anything is revealed.
+  function isFormUnlocked(){
+    if(!state.currentUser) return false;
+    if(getPinMode()==="create") return true;
+    const existing = state.allVotes[state.currentUser];
+    return state.pinInput.length===4 && state.pinInput === existing.pin;
+  }
+
+  async function loadAllVotes(){
+    state.loading = true; state.error=""; render();
+    try{
+      const res = await fetch(`${DB_URL}/rooms/${state.roomCode}/votes.json?_=${Date.now()}`, { cache: "no-store" });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      state.allVotes = data || {};
+    }catch(e){
+      state.error = "데이터를 불러오지 못했어요. 새로고침 버튼을 눌러주세요. (" + (e && e.message || e) + ")";
+    }
+    state.loading = false;
+    const existing = state.currentUser ? state.allVotes[state.currentUser] : null;
+    state.draft = toDraft(existing);
+    state.quickActive = new Set();
+    render();
+  }
+
+  async function submitVote(){
+    if(!state.currentUser){
+      showInlineError("먼저 이름을 선택해주세요.", false);
+      return;
+    }
+    const pinMode = getPinMode();
+    if(!isPinValid()){
+      showInlineError(pinMode==="verify" ? "비밀번호가 일치하지 않아요." : "4자리 숫자 비밀번호를 만들어주세요.", false);
+      return;
+    }
+    const pinToSave = pinMode==="verify"
+      ? (state.pinChangeMode ? state.newPinInput : state.allVotes[state.currentUser].pin)
+      : state.pinInput;
+    state.saving = true; state.error=""; refreshDynamicUI(); clearInlineError();
+    const payload = { ...state.draft, pin: pinToSave, submittedAt: new Date().toISOString() };
+    let ok = false, lastErr = null;
+    for(let attempt=0; attempt<2 && !ok; attempt++){
+      try{
+        const res = await fetch(`${DB_URL}/rooms/${state.roomCode}/votes/${encodeURIComponent(state.currentUser)}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        ok = true;
+      }catch(e){
+        lastErr = e;
+        if(attempt===0) await new Promise(res=>setTimeout(res,600));
+      }
+    }
+    if(ok){
+      state.allVotes[state.currentUser] = payload;
+      state.saved = true;
+      state.saving = false;
+      state.pinInput = pinToSave;
+      state.pinChangeMode = false;
+      state.newPinInput = "";
+      state.screen = "results";
+      state.error = "";
+      render();
+      window.scrollTo(0, 0);
+      return;
+    }else{
+      const reason = (lastErr && (lastErr.message || String(lastErr))) || "알 수 없는 오류";
+      state.error = `투표 저장에 실패했어요 (${reason})`;
+      showInlineError(state.error, true);
+    }
+    state.saving = false;
+    refreshDynamicUI();
+    updateVotedNotice();
+  }
+
+  function clearInlineError(){
+    const box = document.querySelector(".error-box");
+    if(box) box.remove();
+  }
+
+  function showInlineError(msg, withRetry){
+    const body = document.getElementById("screen-body");
+    if(!body) return;
+    let box = document.querySelector(".error-box");
+    if(!box){
+      box = document.createElement("div");
+      box.className = "error-box";
+      body.parentElement.insertBefore(box, body);
+    }
+    box.innerHTML = "";
+    const span = document.createElement("span");
+    span.textContent = "⚠️ " + msg;
+    box.appendChild(span);
+    if(withRetry){
+      const retryBtn = document.createElement("button");
+      retryBtn.textContent = "다시 시도";
+      retryBtn.style.cssText = "margin-left:8px;border:none;background:var(--red);color:#fff;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;";
+      retryBtn.addEventListener("click", submitVote);
+      box.appendChild(retryBtn);
+    }
+  }
+
+  function updateVotedNotice(){
+    const body = document.getElementById("screen-body");
+    if(!body) return;
+    const alreadyVoted = !!(state.allVotes[state.currentUser] && state.allVotes[state.currentUser].submittedAt);
+    let notice = body.querySelector(".notice");
+    if(alreadyVoted && !notice){
+      notice = document.createElement("div");
+      notice.className = "notice";
+      notice.textContent = "✅ 이미 투표하셨어요. 수정하면 기존 응답이 갱신됩니다.";
+      const nameCard = body.querySelector(".card");
+      if(nameCard) nameCard.insertAdjacentElement("afterend", notice);
+    }
+  }
+
+  function switchUser(name){
+    state.currentUser = name;
+    const existing = state.allVotes[name];
+    state.draft = toDraft(existing);
+    state.saved = false;
+    state.pinInput = "";
+    state.pinChangeMode = false;
+    state.newPinInput = "";
+    state.quickActive = new Set();
+    renderVoteScreen();
+  }
+
+  // ---------- Render dispatcher ----------
+  function render(){
+    if(!state.roomCode){
+      renderLandingScreen();
+      return;
+    }
+    if(state.screen === "created"){
+      renderRoomCreatedScreen();
+      return;
+    }
+    if(state.loading){
+      app.innerHTML = `<div class="loading">불러오는 중...</div>`;
+      return;
+    }
+    let html = `
+      <div class="eyebrow">📅 일정 투표</div>
+      <h1>${state.roomConfig ? state.roomConfig.title : ""}</h1>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button id="switchRoomBtn" class="refresh-link">↺ 다른 모임 코드 입력</button>
+        <button id="copyCodeBtn" class="code-chip">🔗 코드: ${state.roomCode} (복사)</button>
+      </div>
+      <div class="tabs">
+        <button class="tab ${state.screen==='vote'?'active':''}" data-tab="vote">투표하기</button>
+        <button class="tab ${state.screen==='results'?'active':''}" data-tab="results">결과보기</button>
+        <button class="tab ${state.screen==='admin'?'active':''}" data-tab="admin">관리자</button>
+      </div>
+      ${state.error?`<div class="error-box">⚠️ ${state.error}</div>`:""}
+      <div id="screen-body"></div>
+    `;
+    app.innerHTML = html;
+    app.querySelectorAll(".tab").forEach(b=>b.addEventListener("click", ()=>{
+      state.screen = b.dataset.tab;
+      state.error = "";
+      if(state.screen === "results" || state.screen === "admin"){
+        loadAllVotes(); // pull the latest votes from Firebase so results/admin are never stale
+      } else {
+        render();
+      }
+    }));
+    document.getElementById("switchRoomBtn").addEventListener("click", ()=>{
+      state.roomCode = null; state.roomConfig = null; state.currentUser = ""; state.error = "";
+      render();
+    });
+    document.getElementById("copyCodeBtn").addEventListener("click", (e)=>copyCodeWithFeedback(state.roomCode, e.currentTarget, "🔗 코드"));
+
+    if(state.screen==="vote") renderVoteScreen();
+    else if(state.screen==="results") renderResultsScreen();
+    else renderAdminScreen();
+  }
+
+  // ---------- LANDING SCREEN (room join / create) ----------
+  function updateMemberCount(){
+    const el = document.getElementById("memberCount");
+    const input = document.getElementById("newMembersInput");
+    if(!el || !input) return;
+    const count = input.value.split("\n").map(s=>s.trim()).filter(Boolean).length;
+    el.textContent = count > 0 ? `${count}명 입력됨` : "";
+  }
+
+  function renderLandingScreen(){
+    const d = state.landingDraft;
+    app.innerHTML = `
+      <div class="eyebrow">📅 일정 투표 도구</div>
+      <h1>모임 코드로 입장하거나<br/>새 모임을 만들어보세요</h1>
+      ${state.error?`<div class="error-box">⚠️ ${state.error}</div>`:""}
+      <div class="card">
+        <div class="name-label">모임 코드 입력</div>
+        <input id="joinCodeInput" type="text" value="${d.joinCode}" placeholder="예: hanjogo0803" style="width:100%;border:none;outline:none;font-size:15px;font-weight:700;color:var(--ink);padding:6px 0 0;background:transparent;" />
+        <button class="submit-btn" id="joinBtn" style="margin-top:12px;">입장하기</button>
+      </div>
+
+      <div class="section-label">또는</div>
+      <div class="card">
+        <div class="name-label">새 모임 만들기</div>
+        <div style="margin-top:10px;">
+          <div class="name-label">모임 이름</div>
+          <input id="newTitleInput" type="text" value="${d.newTitle}" placeholder="예: 한조고 준비위원 3차 미팅" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;" />
+        </div>
+        <div style="margin-top:10px;">
+          <div class="name-label">참석자 명단 (한 줄에 한 명씩, 첫 줄이 관리자)</div>
+          <textarea id="newMembersInput" rows="5" placeholder="예: 장원영" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;font-family:inherit;resize:none;">${d.newMembers}</textarea>
+          <div id="memberCount" class="helper" style="text-align:right;margin-top:4px;"></div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="name-label">모임 코드 (영문/숫자, 참석자에게 공유할 코드)</div>
+          <input id="newCodeInput" type="text" value="${d.newCode}" placeholder="예: hanjogo0803" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;" />
+        </div>
+        <div style="margin-top:10px;">
+          <div class="name-label">투표 가능 날짜 범위 (비워두면 제한 없음)</div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <input id="newDateStartInput" type="date" value="${d.dateStart}" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;" />
+            <input id="newDateEndInput" type="date" value="${d.dateEnd}" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;" />
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="name-label">투표 가능 시간 범위</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <select id="newHourStartInput" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;">
+              ${Array.from({length:24},(_,h)=>`<option value="${h}" ${String(h)===d.hourStart?"selected":""}>${String(h).padStart(2,"0")}:00</option>`).join("")}
+            </select>
+            <span style="color:var(--gray);font-size:12px;">부터</span>
+            <select id="newHourEndInput" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;">
+              ${Array.from({length:24},(_,h)=>`<option value="${h}" ${String(h)===d.hourEnd?"selected":""}>${String(h).padStart(2,"0")}:00</option>`).join("")}
+            </select>
+            <span style="color:var(--gray);font-size:12px;">까지</span>
+          </div>
+        </div>
+        <button class="submit-btn" id="createBtn" style="margin-top:14px;">모임 만들기</button>
+      </div>
+      <div class="helper">모임을 만들면 코드가 생성돼요. 이 코드와 이 파일(또는 이 파일을 여는 방법)을 참석자에게 공유하면, 각자 코드를 입력해서 같은 모임에 투표할 수 있어요.</div>
+    `;
+    document.getElementById("joinCodeInput").addEventListener("input", e=>{ state.landingDraft.joinCode = e.target.value; });
+    document.getElementById("newTitleInput").addEventListener("input", e=>{ state.landingDraft.newTitle = e.target.value; });
+    document.getElementById("newMembersInput").addEventListener("input", e=>{
+      state.landingDraft.newMembers = e.target.value;
+      updateMemberCount();
+    });
+    updateMemberCount();
+    document.getElementById("newCodeInput").addEventListener("input", e=>{ state.landingDraft.newCode = e.target.value; });
+    document.getElementById("newDateStartInput").addEventListener("input", e=>{ state.landingDraft.dateStart = e.target.value; });
+    document.getElementById("newDateEndInput").addEventListener("input", e=>{ state.landingDraft.dateEnd = e.target.value; });
+    document.getElementById("newHourStartInput").addEventListener("change", e=>{ state.landingDraft.hourStart = e.target.value; });
+    document.getElementById("newHourEndInput").addEventListener("change", e=>{ state.landingDraft.hourEnd = e.target.value; });
+    document.getElementById("joinBtn").addEventListener("click", ()=>{
+      const code = document.getElementById("joinCodeInput").value.trim();
+      if(!code){ state.error="코드를 입력해주세요."; render(); return; }
+      joinRoom(code);
+    });
+    document.getElementById("createBtn").addEventListener("click", ()=>{
+      const title = document.getElementById("newTitleInput").value.trim();
+      const membersRaw = document.getElementById("newMembersInput").value;
+      const code = document.getElementById("newCodeInput").value.trim();
+      const dateStart = document.getElementById("newDateStartInput").value;
+      const dateEnd = document.getElementById("newDateEndInput").value;
+      const hourStart = parseInt(document.getElementById("newHourStartInput").value, 10);
+      const hourEnd = parseInt(document.getElementById("newHourEndInput").value, 10);
+      const members = membersRaw.split("\n").map(s=>s.trim()).filter(Boolean);
+      if(!title){ state.error="모임 이름을 입력해주세요."; render(); return; }
+      if(members.length<1){ state.error="참석자를 최소 1명 입력해주세요."; render(); return; }
+      if(!/^[A-Za-z0-9가-힣_-]{2,40}$/.test(code)){ state.error="코드는 2~40자의 영문/숫자/한글로 입력해주세요."; render(); return; }
+      if(dateStart && dateEnd && dateStart > dateEnd){ state.error="투표 가능 날짜의 시작일이 종료일보다 늦어요."; render(); return; }
+      if(hourEnd <= hourStart){ state.error="투표 가능 시간의 종료 시각이 시작 시각보다 늦어야 해요."; render(); return; }
+      createRoom(code, title, members, dateStart, dateEnd, hourStart, hourEnd);
+    });
+  }
+
+  async function joinRoom(rawCode){
+    const code = rawCode.trim().toLowerCase();
+    state.error=""; state.loading=true; render();
+    try{
+      const res = await fetch(`${DB_URL}/rooms/${encodeURIComponent(code)}/config.json?_=${Date.now()}`, { cache: "no-store" });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const config = await res.json();
+      if(!config){
+        state.loading=false;
+        state.error = "존재하지 않는 코드예요. 코드를 다시 확인하거나 새 모임을 만들어주세요.";
+        render();
+        return;
+      }
+      state.roomCode = code;
+      state.roomConfig = config;
+      state.currentUser = "";
+      state.screen = "vote";
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" };
+      await loadAllVotes();
+    }catch(e){
+      state.loading=false;
+      state.error = "접속에 실패했어요. 인터넷 연결을 확인하고 다시 시도해주세요. (" + (e && e.message || e) + ")";
+      render();
+    }
+  }
+
+  async function createRoom(rawCode, title, members, dateStart, dateEnd, hourStart, hourEnd){
+    const code = rawCode.trim().toLowerCase();
+    state.error=""; state.loading=true; render();
+    try{
+      const checkRes = await fetch(`${DB_URL}/rooms/${encodeURIComponent(code)}/config.json?_=${Date.now()}`, { cache: "no-store" });
+      const existing = checkRes.ok ? await checkRes.json() : null;
+      if(existing){
+        state.loading=false;
+        state.error = "이미 사용 중인 코드예요. 다른 코드를 입력해주세요.";
+        render();
+        return;
+      }
+      const config = {
+        title, members,
+        dateStart: dateStart || null,
+        dateEnd: dateEnd || null,
+        hourStart: Number.isInteger(hourStart) ? hourStart : 10,
+        hourEnd: Number.isInteger(hourEnd) ? hourEnd : 21,
+        createdAt: new Date().toISOString(),
+      };
+      const res = await fetch(`${DB_URL}/rooms/${encodeURIComponent(code)}/config.json`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.roomCode = code;
+      state.roomConfig = config;
+      state.currentUser = "";
+      state.screen = "created";
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" };
+      loadAllVotes();
+    }catch(e){
+      state.loading=false;
+      state.error = "모임 생성에 실패했어요. 다시 시도해주세요. (" + (e && e.message || e) + ")";
+      render();
+    }
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      try{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      }catch(e2){
+        return false;
+      }
+    }
+  }
+
+  async function copyCodeWithFeedback(text, btnEl){
+    const ok = await copyToClipboard(text);
+    if(!btnEl) return;
+    const prev = btnEl.textContent;
+    btnEl.textContent = ok ? "✓ 복사됨!" : "복사 실패, 직접 선택해주세요";
+    setTimeout(()=>{ btnEl.textContent = prev; }, 1600);
+  }
+
+  function renderRoomCreatedScreen(){
+    const title = state.roomConfig ? state.roomConfig.title : "";
+    const members = (state.roomConfig && state.roomConfig.members) || [];
+    const shareText = `[일정 투표] ${title}\n아래 코드로 입장해서 투표해주세요!\n모임 코드: ${state.roomCode}`;
+    app.innerHTML = `
+      <div class="eyebrow">📅 일정 투표 도구</div>
+      <h1>모임이 만들어졌어요!</h1>
+      <div class="card" style="text-align:center;">
+        <div class="name-label">참석자에게 공유할 모임 코드</div>
+        <div id="bigCode" style="margin-top:10px;font-size:28px;font-weight:800;letter-spacing:1px;color:var(--purpleDark);user-select:all;padding:10px;border:1px dashed var(--purple);border-radius:12px;">${state.roomCode}</div>
+        <button class="submit-btn" id="copyBigCodeBtn" style="margin-top:12px;">코드 복사하기</button>
+        <button class="preset-btn" id="copyShareTextBtn" style="width:100%;margin-top:8px;padding:9px 0;">공유 문구 통째로 복사</button>
+      </div>
+      <div class="helper">"${title}" · 참석자 ${members.length}명 등록됨</div>
+      <button class="submit-btn" id="goVoteBtn" style="margin-top:18px;">투표하러 가기</button>
+    `;
+    document.getElementById("copyBigCodeBtn").addEventListener("click", (e)=>copyCodeWithFeedback(state.roomCode, e.currentTarget));
+    document.getElementById("copyShareTextBtn").addEventListener("click", (e)=>copyCodeWithFeedback(shareText, e.currentTarget));
+    document.getElementById("goVoteBtn").addEventListener("click", ()=>{ state.screen = "vote"; render(); });
+  }
+
+
+  // ---------- VOTE SCREEN ----------
+  function renderVoteScreen(){
+    const body = document.getElementById("screen-body");
+    if(!body) return;
+    const members = (state.roomConfig && state.roomConfig.members) || [];
+    const alreadyVoted = !!(state.currentUser && state.allVotes[state.currentUser] && state.allVotes[state.currentUser].submittedAt);
+    const nameChosen = !!state.currentUser;
+    const unlocked = isFormUnlocked();
+    body.innerHTML = `
+      <div class="card">
+        <div class="name-label">내 이름</div>
+        <select class="name-select" id="nameSelect">
+          <option value="" ${nameChosen?"":"selected"} disabled>이름을 선택해주세요</option>
+          ${members.map(m=>`<option value="${m}" ${m===state.currentUser?"selected":""}>${m}</option>`).join("")}
+        </select>
+      </div>
+      ${!nameChosen ? `<div class="helper" style="margin-top:10px;">먼저 이름을 선택하면 투표 항목이 나타나요.</div>` : ""}
+      ${nameChosen && alreadyVoted?`<div class="notice">✅ 이미 투표하셨어요. 비밀번호를 확인하면 수정할 수 있어요.</div>`:""}
+      ${nameChosen ? `<div class="notice" style="background:#FAF8F4;color:var(--gray);">📌 투표 가능 범위: ${(state.roomConfig&&state.roomConfig.dateStart)?state.roomConfig.dateStart:"제한 없음"} ~ ${(state.roomConfig&&state.roomConfig.dateEnd)?state.roomConfig.dateEnd:"제한 없음"} · ${String(state.roomConfig?state.roomConfig.hourStart:10).padStart(2,"0")}:00~${String(state.roomConfig?state.roomConfig.hourEnd:21).padStart(2,"0")}:00</div>` : ""}
+      ${nameChosen ? `
+      <div class="card" style="margin-top:10px;">
+        <div class="name-label">${getPinMode()==='verify' ? '🔒 비밀번호 입력 (다른 사람 투표를 보호해요)' : '🔒 비밀번호 만들기 (숫자 4자리)'}</div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" value="${state.pinInput}" placeholder="••••" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:20px;letter-spacing:8px;outline:none;text-align:center;" />
+          <button id="pinToggleBtn" type="button" class="preset-btn" style="width:56px;flex:none;">보기</button>
+        </div>
+        <div class="region-hint" style="margin-top:4px;">${getPinMode()==='verify' ? '이 이름으로 처음 투표할 때 만든 비밀번호를 맞게 입력해야 투표 내용을 보고 수정할 수 있어요.' : '이 번호로 나중에 내 투표를 다시 수정할 수 있어요. 잊지 않게 기억해두세요.'}</div>
+        <div id="pinFeedback" style="margin-top:4px;font-size:11px;font-weight:700;"></div>
+        ${getPinMode()==='verify' ? `
+        <button id="pinChangeToggleBtn" type="button" class="refresh-link" style="margin-top:10px;">${state.pinChangeMode ? '취소' : '🔑 비밀번호 변경하기'}</button>
+        <div id="pinChangeBox" style="display:${state.pinChangeMode?"block":"none"};margin-top:8px;">
+          <div class="name-label">새 비밀번호 (숫자 4자리)</div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <input id="newPinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" value="${state.newPinInput}" placeholder="••••" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:20px;letter-spacing:8px;outline:none;text-align:center;" />
+            <button id="newPinToggleBtn" type="button" class="preset-btn" style="width:56px;flex:none;">보기</button>
+          </div>
+          <div id="newPinFeedback" style="margin-top:4px;font-size:11px;font-weight:700;"></div>
+        </div>
+        ` : ""}
+      </div>
+      ` : ""}
+      ${nameChosen && !unlocked ? `<div class="helper lock-helper" style="margin-top:14px;">🔒 비밀번호를 올바르게 입력하면 투표 내용이 나타나요.</div>` : ""}
+
+      ${nameChosen && unlocked ? `
+      <div id="voteFormBody">
+        <div class="section-label">⚡ 빠른 선택</div>
+        <div class="card">
+          <div class="quick-grid">
+            <button class="quick-btn" data-quick="weekday-morning">평일 오전</button>
+            <button class="quick-btn" data-quick="weekday-afternoon">평일 오후</button>
+            <button class="quick-btn" data-quick="weekday-evening">평일 저녁</button>
+            <button class="quick-btn" data-quick="weekend-morning">주말 오전</button>
+            <button class="quick-btn" data-quick="weekend-afternoon">주말 오후</button>
+            <button class="quick-btn" data-quick="weekend-evening">주말 저녁</button>
+          </div>
+          <div class="quick-hint">이번 달 달력에서 해당 요일을 자동으로 체크하고, 시간대도 같이 선택돼요.</div>
+        </div>
+
+        <div class="section-label">📅 가능한 날짜 (달력에서 복수 선택)</div>
+        <div class="card">
+          <div class="cal-header">
+            <button id="prevMonth">‹</button>
+            <div class="cal-title" id="calTitle">${state.calYear}년 ${state.calMonth+1}월</div>
+            <button id="nextMonth">›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-hint">선택됨: ${state.draft.dates.length===0?"없음":state.draft.dates.map(d=>fmtLabel(d)).join(", ")}</div>
+        </div>
+
+        <div class="section-label">🕒 가능한 시간 (드래그해서 여러 개 선택)</div>
+        <div class="card">
+          <div class="time-presets">
+            <button class="preset-btn" data-preset="morning">오전 10-13</button>
+            <button class="preset-btn" data-preset="afternoon">오후 14-17</button>
+            <button class="preset-btn" data-preset="evening">저녁 18-21</button>
+            <button class="preset-btn" data-preset="clear">초기화</button>
+          </div>
+          <div class="time-grid" id="timeGrid">
+            ${getTimes().map(t=>`<div class="time-cell ${state.draft.times.includes(t)?"active":""}" data-time="${t}">${t}</div>`).join("")}
+          </div>
+          <div class="time-hint">칸을 누른 채로 드래그하면 한번에 여러 시간을 선택/해제할 수 있어요.</div>
+        </div>
+
+        <div class="section-label">📍 희망 지역 (지도에서 여러 곳 선택 가능)</div>
+        <div class="card">
+          <div id="mapbox"></div>
+          <div class="region-picked">${state.draft.regions.length? `선택됨: ${state.draft.regions.join(", ")}` : "지도의 마커를 눌러 지역을 선택해주세요"}</div>
+          <div class="region-hint">여러 지역을 동시에 선택할 수 있고, 선택한 마커를 한 번 더 누르면 선택이 취소돼요.</div>
+        </div>
+
+        <div class="section-label">✏️ 메모 (선택)</div>
+        <textarea class="memo" id="memoInput" rows="3" placeholder="전달하고 싶은 내용이 있다면 적어주세요">${state.draft.memo||""}</textarea>
+
+        <button class="submit-btn" id="submitBtn" ${state.saving||state.draft.dates.length===0||state.draft.times.length===0||!isPinValid()?"disabled":""}>
+          ${state.saving?"저장 중...":(state.saved?"✓ 투표 완료":"투표하기")}
+        </button>
+        ${(state.draft.dates.length===0||state.draft.times.length===0)?`<div class="helper">날짜와 시간을 최소 1개씩 선택해주세요</div>`:""}
+      </div>
+      ` : ""}
+    `;
+
+    document.getElementById("nameSelect").addEventListener("change", e=>switchUser(e.target.value));
+    if(!nameChosen) return; // pin box isn't rendered yet either
+
+    document.getElementById("pinInput").addEventListener("input", e=>{
+      const wasUnlocked = isFormUnlocked();
+      const digitsOnly = e.target.value.replace(/[^0-9]/g,"").slice(0,4);
+      e.target.value = digitsOnly;
+      state.pinInput = digitsOnly;
+      const nowUnlocked = isFormUnlocked();
+      if(wasUnlocked !== nowUnlocked){
+        renderVoteScreen();
+        const fb = document.getElementById("pinFeedback");
+        if(fb){
+          if(getPinMode()==="verify"){
+            fb.textContent = isPinValid() ? "✓ 확인됐어요" : "✗ 비밀번호가 달라요";
+            fb.style.color = isPinValid() ? "var(--green)" : "var(--red)";
+          }else{
+            fb.textContent = "✓ 사용할 수 있어요";
+            fb.style.color = "var(--green)";
+          }
+        }
+        const freshInput = document.getElementById("pinInput");
+        if(freshInput) freshInput.focus();
+        return;
+      }
+      const feedback = document.getElementById("pinFeedback");
+      if(feedback){
+        if(digitsOnly.length<4){
+          feedback.textContent = "";
+        }else if(getPinMode()==="verify"){
+          feedback.textContent = isPinValid() ? "✓ 확인됐어요" : "✗ 비밀번호가 달라요";
+          feedback.style.color = isPinValid() ? "var(--green)" : "var(--red)";
+        }else{
+          feedback.textContent = "✓ 사용할 수 있어요";
+          feedback.style.color = "var(--green)";
+        }
+      }
+      refreshDynamicUI();
+    });
+    document.getElementById("pinToggleBtn").addEventListener("click", (e)=>{
+      const input = document.getElementById("pinInput");
+      const showing = input.type === "text";
+      input.type = showing ? "password" : "text";
+      e.currentTarget.textContent = showing ? "보기" : "숨기기";
+    });
+    const pinChangeToggleBtn = document.getElementById("pinChangeToggleBtn");
+    if(pinChangeToggleBtn){
+      pinChangeToggleBtn.addEventListener("click", ()=>{
+        state.pinChangeMode = !state.pinChangeMode;
+        if(!state.pinChangeMode) state.newPinInput = "";
+        const box = document.getElementById("pinChangeBox");
+        if(box) box.style.display = state.pinChangeMode ? "block" : "none";
+        pinChangeToggleBtn.textContent = state.pinChangeMode ? "취소" : "🔑 비밀번호 변경하기";
+        const newPinInputEl = document.getElementById("newPinInput");
+        if(newPinInputEl) newPinInputEl.value = "";
+        const newFeedback = document.getElementById("newPinFeedback");
+        if(newFeedback) newFeedback.textContent = "";
+        refreshDynamicUI();
+      });
+    }
+    const newPinInputEl = document.getElementById("newPinInput");
+    if(newPinInputEl){
+      newPinInputEl.addEventListener("input", e=>{
+        const digitsOnly = e.target.value.replace(/[^0-9]/g,"").slice(0,4);
+        e.target.value = digitsOnly;
+        state.newPinInput = digitsOnly;
+        const feedback = document.getElementById("newPinFeedback");
+        if(feedback){
+          feedback.textContent = digitsOnly.length<4 ? "" : "✓ 사용할 수 있어요";
+          feedback.style.color = "var(--green)";
+        }
+        refreshDynamicUI();
+      });
+    }
+    const newPinToggleBtn = document.getElementById("newPinToggleBtn");
+    if(newPinToggleBtn){
+      newPinToggleBtn.addEventListener("click", (e)=>{
+        const input = document.getElementById("newPinInput");
+        const showing = input.type === "text";
+        input.type = showing ? "password" : "text";
+        e.currentTarget.textContent = showing ? "보기" : "숨기기";
+      });
+    }
+
+    if(!unlocked) return; // rest of the form isn't rendered until the pin is verified
+
+    document.getElementById("prevMonth").addEventListener("click", ()=>{ shiftMonth(-1); });
+    document.getElementById("nextMonth").addEventListener("click", ()=>{ shiftMonth(1); });
+    document.getElementById("memoInput").addEventListener("input", e=>{ state.draft.memo = e.target.value; });
+    document.getElementById("submitBtn").addEventListener("click", submitVote);
+    document.querySelectorAll(".preset-btn").forEach(b=>b.addEventListener("click", ()=>applyPreset(b.dataset.preset)));
+    document.querySelectorAll(".quick-btn").forEach(b=>b.addEventListener("click", ()=>applyQuickPreset(b.dataset.quick)));
+
+    buildCalendar();
+    buildTimeGrid();
+    buildMap();
+    refreshQuickButtons();
+  }
+
+  const TIME_BUCKETS = {
+    morning: ["10:00","11:00","12:00","13:00"],
+    afternoon: ["14:00","15:00","16:00","17:00"],
+    evening: ["18:00","19:00","20:00","21:00"],
+  };
+  function clippedBucket(part){
+    const avail = new Set(getTimes());
+    return (TIME_BUCKETS[part]||[]).filter(t=>avail.has(t));
+  }
+
+  function getQuickTargets(kind){
+    const [dayType, part] = kind.split("-");
+    const times = clippedBucket(part);
+    const y = state.calYear, m = state.calMonth;
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const targetKeys = [];
+    for(let d=1; d<=daysInMonth; d++){
+      const dateObj = new Date(y,m,d);
+      if(!isDateSelectable(dateObj)) continue;
+      const wd = dateObj.getDay();
+      const isWeekend = (wd===0 || wd===6);
+      if((dayType==="weekend") === isWeekend){ targetKeys.push(dkey(y,m,d)); }
+    }
+    return { dayType, part, targetKeys, times };
+  }
+
+  function refreshQuickButtons(){
+    document.querySelectorAll(".quick-btn").forEach(b=>{
+      b.classList.toggle("active", state.quickActive.has(b.dataset.quick));
+    });
+  }
+
+  // Each quick button tracks its own explicit on/off state (state.quickActive),
+  // so turning one on never visually activates another button just because
+  // they happen to share the same weekday/weekend date range.
+  function applyQuickPreset(kind){
+    const { dayType, part, targetKeys, times } = getQuickTargets(kind);
+    const turningOn = !state.quickActive.has(kind);
+
+    if(turningOn){
+      state.quickActive.add(kind);
+      const dset = new Set(state.draft.dates); targetKeys.forEach(k=>dset.add(k));
+      state.draft.dates = Array.from(dset).sort();
+      const tset = new Set(state.draft.times); times.forEach(t=>tset.add(t));
+      state.draft.times = Array.from(tset);
+    }else{
+      state.quickActive.delete(kind);
+      // only remove a date if no other currently-active button of the same day type still needs it
+      const siblingDayTypeActive = Array.from(state.quickActive).some(k=>k.startsWith(dayType+"-"));
+      if(!siblingDayTypeActive){
+        state.draft.dates = state.draft.dates.filter(k=>!targetKeys.includes(k));
+      }
+      // only remove a time slot if no other currently-active button uses the same time-of-day part
+      const siblingPartActive = Array.from(state.quickActive).some(k=>k.endsWith("-"+part));
+      if(!siblingPartActive){
+        state.draft.times = state.draft.times.filter(t=>!times.includes(t));
+      }
+    }
+    state.saved = false;
+    buildCalendar();
+    document.querySelectorAll("#timeGrid .time-cell").forEach(cell=>{
+      cell.classList.toggle("active", state.draft.times.includes(cell.dataset.time));
+    });
+    refreshQuickButtons();
+    updateCalHint();
+    refreshDynamicUI();
+  }
+
+  function shiftMonth(delta){
+    let m = state.calMonth + delta, y = state.calYear;
+    if(m<0){m=11;y--;} if(m>11){m=0;y++;}
+    state.calMonth=m; state.calYear=y;
+    const title = document.getElementById("calTitle");
+    if(title) title.textContent = `${state.calYear}년 ${state.calMonth+1}월`;
+    state.quickActive.clear();
+    buildCalendar();
+    refreshQuickButtons();
+  }
+
+  function isDateSelectable(dateObj){
+    if(dateObj < TODAY) return false;
+    const cfg = state.roomConfig;
+    if(cfg && cfg.dateStart){
+      const [sy,sm,sd] = cfg.dateStart.split("-").map(Number);
+      if(dateObj < new Date(sy, sm-1, sd)) return false;
+    }
+    if(cfg && cfg.dateEnd){
+      const [ey,em,ed] = cfg.dateEnd.split("-").map(Number);
+      if(dateObj > new Date(ey, em-1, ed)) return false;
+    }
+    return true;
+  }
+
+  function buildCalendar(){
+    const grid = document.getElementById("calGrid");
+    if(!grid) return;
+    const y = state.calYear, m = state.calMonth;
+    const firstDay = new Date(y,m,1).getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    let html = WD.map(w=>`<div class="cal-wd">${w}</div>`).join("");
+    for(let i=0;i<firstDay;i++) html += `<div class="cal-day empty"></div>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const key = dkey(y,m,d);
+      const dateObj = new Date(y,m,d);
+      const isPast = !isDateSelectable(dateObj);
+      const selected = state.draft.dates.includes(key);
+      html += `<div class="cal-day ${isPast?"disabled":""} ${selected?"selected":""}" data-key="${key}" data-past="${isPast}">${d}</div>`;
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll(".cal-day:not(.empty):not(.disabled)").forEach(cell=>{
+      cell.addEventListener("click", ()=>{
+        const key = cell.dataset.key;
+        const idx = state.draft.dates.indexOf(key);
+        if(idx>=0) state.draft.dates.splice(idx,1); else state.draft.dates.push(key);
+        state.draft.dates.sort();
+        state.saved = false;
+        cell.classList.toggle("selected");
+        updateCalHint();
+        refreshQuickButtons();
+        refreshDynamicUI();
+      });
+    });
+  }
+
+  function applyPreset(kind){
+    if(kind==="clear"){ state.draft.times=[]; }
+    else{
+      const set = new Set(state.draft.times);
+      clippedBucket(kind).forEach(t=>set.add(t));
+      state.draft.times = Array.from(set);
+    }
+    state.saved = false;
+    document.querySelectorAll("#timeGrid .time-cell").forEach(cell=>{
+      cell.classList.toggle("active", state.draft.times.includes(cell.dataset.time));
+    });
+    refreshQuickButtons();
+    refreshDynamicUI();
+  }
+
+  function buildTimeGrid(){
+    const grid = document.getElementById("timeGrid");
+    if(!grid) return;
+    let dragging = false, mode = "select";
+    const applyTo = (cell)=>{
+      const t = cell.dataset.time;
+      const has = state.draft.times.includes(t);
+      if(mode==="select" && !has){ state.draft.times.push(t); cell.classList.add("active"); state.saved=false; refreshQuickButtons(); refreshDynamicUI(); }
+      else if(mode==="deselect" && has){ state.draft.times = state.draft.times.filter(x=>x!==t); cell.classList.remove("active"); state.saved=false; refreshQuickButtons(); refreshDynamicUI(); }
+    };
+    grid.querySelectorAll(".time-cell").forEach(cell=>{
+      cell.addEventListener("pointerdown", (e)=>{
+        e.preventDefault();
+        dragging = true;
+        mode = state.draft.times.includes(cell.dataset.time) ? "deselect" : "select";
+        applyTo(cell);
+      });
+    });
+    grid.addEventListener("pointermove", (e)=>{
+      if(!dragging) return;
+      const elAt = document.elementFromPoint(e.clientX, e.clientY);
+      if(elAt && elAt.classList && elAt.classList.contains("time-cell")) applyTo(elAt);
+    });
+    window.addEventListener("pointerup", ()=>{ dragging=false; });
+  }
+
+  function updateCalHint(){
+    const hint = document.querySelector(".cal-hint");
+    if(hint) hint.textContent = "선택됨: " + (state.draft.dates.length===0?"없음":state.draft.dates.map(d=>fmtLabel(d)).join(", "));
+  }
+
+  function refreshDynamicUI(){
+    const btn = document.getElementById("submitBtn");
+    if(btn){
+      const disabled = state.saving || state.draft.dates.length===0 || state.draft.times.length===0 || !isPinValid();
+      btn.disabled = disabled;
+      btn.textContent = state.saving ? "저장 중..." : (state.saved ? "✓ 투표 완료" : "투표하기");
+    }
+    const body = document.getElementById("screen-body");
+    const shouldShowHelper = state.draft.dates.length===0 || state.draft.times.length===0;
+    const voteForm = document.getElementById("voteFormBody");
+    let helperEl = document.querySelector(".dt-helper");
+    if(shouldShowHelper && !helperEl && voteForm){
+      helperEl = document.createElement("div");
+      helperEl.className = "helper dt-helper";
+      helperEl.textContent = "날짜와 시간을 최소 1개씩 선택해주세요";
+      voteForm.appendChild(helperEl);
+    } else if(!shouldShowHelper && helperEl){
+      helperEl.remove();
+    }
+  }
+
+  function buildMap(){
+    const el = document.getElementById("mapbox");
+    if(!el || typeof L === "undefined") return;
+    const map = L.map(el, { zoomControl:true, scrollWheelZoom:false }).setView([37.52, 127.15], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+    }).addTo(map);
+
+    const makeIcon = (isSelected, name) => L.divIcon({
+      className: "",
+      html: `<div style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <div style="width:${isSelected?14:10}px;height:${isSelected?14:10}px;border-radius:50%;background:${isSelected?'#E07A5F':'#7C6AE6'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);flex:none;"></div>
+        <div style="background:#fff;border:1px solid ${isSelected?'#E07A5F':'var(--line)'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:${isSelected?'#E07A5F':'var(--ink)'};box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;">${name}</div>
+      </div>`,
+      iconSize: [110, 20], iconAnchor: [7, 10],
+    });
+
+    const clusterGroup = typeof L.markerClusterGroup === "function"
+      ? L.markerClusterGroup({ maxClusterRadius: 40, spiderfyOnMaxZoom: true, disableClusteringAtZoom: 12 })
+      : L.layerGroup();
+
+    state.markers = {};
+    REGIONS.forEach(r=>{
+      const isSelected = state.draft.regions.includes(r.name);
+      const marker = L.marker([r.lat, r.lng], { icon: makeIcon(isSelected, r.name) });
+      marker.on("click", ()=>{
+        const idx = state.draft.regions.indexOf(r.name);
+        if(idx>=0) state.draft.regions.splice(idx,1); else state.draft.regions.push(r.name);
+        state.saved = false;
+        REGIONS.forEach(rr=>{
+          const m = state.markers[rr.name];
+          if(m) m.setIcon(makeIcon(state.draft.regions.includes(rr.name), rr.name));
+        });
+        const label = document.querySelector(".region-picked");
+        if(label) label.textContent = state.draft.regions.length ? `선택됨: ${state.draft.regions.join(", ")}` : "지도의 마커를 눌러 지역을 선택해주세요";
+        refreshDynamicUI();
+      });
+      clusterGroup.addLayer(marker);
+      state.markers[r.name] = marker;
+    });
+    map.addLayer(clusterGroup);
+    setTimeout(()=>map.invalidateSize(), 150);
+  }
+
+  // ---------- RESULTS SCREEN ----------
+  function renderResultsScreen(){
+    const body = document.getElementById("screen-body");
+    if(!body) return;
+    const votedNames = Object.keys(state.allVotes);
+    const total = ((state.roomConfig && state.roomConfig.members) || []).length;
+
+    if(votedNames.length===0){
+      body.innerHTML = `
+        <div class="stat-hero"><div><div class="lbl">참여 현황</div><div class="val">${total}명 중 0명 참여</div></div>👥</div>
+        <div class="empty-note">아직 투표한 사람이 없어요. 투표가 들어오면 결과가 표시됩니다.</div>
+      `;
+      return;
+    }
+
+    // unique dates across all votes
+    const dateSet = new Set();
+    votedNames.forEach(n => (state.allVotes[n].dates||[]).forEach(d=>dateSet.add(d)));
+    const dateList = Array.from(dateSet).sort();
+
+    const namesFor = (predicate) => votedNames.filter(predicate);
+
+    const dateCounts = dateList.map(key => {
+      const names = namesFor(n => (state.allVotes[n].dates||[]).includes(key));
+      return { key, label: fmtLabel(key), wd: weekdayOf(key), count: names.length, names };
+    }).sort((a,b)=>b.count-a.count);
+
+    const times = getTimes();
+    const timeCounts = times.map(t => {
+      const names = namesFor(n => (state.allVotes[n].times||[]).includes(t));
+      return { time: t, count: names.length, names };
+    }).sort((a,b)=>b.count-a.count);
+
+    const allRegionCounts = REGIONS.map(r => {
+      const names = namesFor(n => {
+        const v = state.allVotes[n];
+        return v.regions ? v.regions.includes(r.name) : v.region === r.name;
+      });
+      return { region: r.name, count: names.length, names };
+    }).sort((a,b)=>b.count-a.count);
+
+    // Best date+time combos, ranked (top 3), based on actual joint availability rather than
+    // separately-best date and separately-best time (which may not overlap well).
+    const comboList = [];
+    dateList.forEach(dk => {
+      times.forEach(t => {
+        const names = namesFor(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t));
+        if(names.length>0) comboList.push({ date: dk, time: t, count: names.length, names });
+      });
+    });
+    comboList.sort((a,b)=>b.count-a.count);
+    const topCombos = comboList.slice(0,3);
+
+    let heatMax = 1;
+    dateList.forEach(dk => times.forEach(t=>{
+      const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
+      if(c>heatMax) heatMax = c;
+    }));
+
+    const medals = ["🥇","🥈","🥉"];
+    body.innerHTML = `
+      <div class="stat-hero"><div><div class="lbl">참여 현황</div><div class="val">${total}명 중 ${votedNames.length}명 참여</div></div>👥</div>
+
+      <div class="section-label">⭐ 추천 일정 (1~3순위)</div>
+      ${topCombos.length===0 ? `<div class="rec-card"><div class="rec-sub">겹치는 날짜·시간이 아직 없어요.</div></div>` : topCombos.map((c,i)=>{
+        const d = dateList.length ? { label: fmtLabel(c.date), wd: weekdayOf(c.date) } : null;
+        return `
+        <div class="rec-card" style="margin-bottom:10px;">
+          <div class="rec-title">${medals[i]} ${i+1}순위</div>
+          <div class="rec-main">
+            <span class="rec-date">${fmtLabel(c.date)} (${weekdayOf(c.date)})</span>
+            <span class="rec-time">${c.time}</span>
+          </div>
+          <div class="rec-sub">모두 가능한 인원 <b>${c.count}명</b> · ${c.names.join(", ")}</div>
+        </div>
+        `;
+      }).join("")}
+
+      <div class="section-label">📅 날짜별 가능 인원 (전체 ${dateCounts.length}개)</div>
+      <div>${dateCounts.map((d,i)=>barRow(`${d.label}(${d.wd})`, d.count, total, i, "var(--purple)", d.names)).join("")}</div>
+
+      <div class="section-label">🕒 시간대별 가능 인원 (전체 ${timeCounts.length}개)</div>
+      <div>${timeCounts.map((t,i)=>barRow(t.time, t.count, total, i, "var(--terracotta)", t.names)).join("")}</div>
+
+      <div class="section-label">📍 지역별 득표 (지도에서 바로 확인)</div>
+      <div class="card">
+        <div id="resultMapbox"></div>
+      </div>
+      <div class="section-label">전체 순위 (${allRegionCounts.length}개)</div>
+      <div>${allRegionCounts.map((r,i)=>barRow(r.region, r.count, total, i, "var(--purpleDark)", r.names)).join("")}</div>
+
+      <div class="section-label">🗓 날짜 × 시간 히트맵</div>
+      <div class="card">
+        <div class="heatmap-wrap">
+          <div class="heatmap-hdr">${times.map(t=>`<div class="heatmap-hcell">${t.slice(0,2)}</div>`).join("")}</div>
+          ${dateList.map(dk=>{
+            const cells = times.map(t=>{
+              const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
+              const op = c===0 ? 1 : 0.25 + (c/heatMax)*0.75;
+              const bg = c===0 ? "#F0ECFB" : "#7C6AE6";
+              const col = c===0 ? "#D8D0F0" : "#fff";
+              return `<div class="heatmap-cell" style="background:${bg};opacity:${op};color:${col};">${c>0?c:""}</div>`;
+            }).join("");
+            return `<div class="heatmap-row"><div class="heatmap-date">${fmtLabel(dk)}</div>${cells}</div>`;
+          }).join("")}
+        </div>
+      </div>
+    `;
+    buildResultsMap(allRegionCounts);
+  }
+
+  function shortRegionName(name){
+    return name.replace(/(구|시|군)$/,"");
+  }
+
+  function buildResultsMap(allRegionCounts){
+    const el = document.getElementById("resultMapbox");
+    if(!el || typeof L === "undefined") return;
+    const map = L.map(el, { zoomControl:true, scrollWheelZoom:false }).setView([37.52, 127.15], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+    }).addTo(map);
+
+    const countByName = {};
+    allRegionCounts.forEach(r=>{ countByName[r.region] = r.count; });
+    const maxCount = Math.max(1, ...allRegionCounts.map(r=>r.count));
+
+    const layerGroup = L.layerGroup();
+
+    let anyVoted = false;
+    REGIONS.forEach(r=>{
+      const count = countByName[r.name] || 0;
+      if(count === 0) return; // only plot regions that actually received votes
+      anyVoted = true;
+      const intensity = count / maxCount;
+      const bg = count === maxCount ? "#E07A5F" : "#7C6AE6";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;opacity:${0.55+intensity*0.45};">${shortRegionName(r.name)} ${count}명</div>`,
+        iconSize: null,
+      });
+      const marker = L.marker([r.lat, r.lng], { icon });
+      layerGroup.addLayer(marker);
+    });
+    map.addLayer(layerGroup);
+
+    if(!anyVoted){
+      el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--gray);font-size:13px;">아직 지역을 선택한 투표가 없어요.</div>';
+      return;
+    }
+    setTimeout(()=>map.invalidateSize(), 150);
+  }
+
+  function barRow(label, count, total, rank, color, names){
+    const pct = total>0 ? Math.round(count/total*100) : 0;
+    return `
+      <div class="bar-row-wrap">
+        <div class="bar-row">
+          <div class="bar-rank ${rank===0?'top':''}">${rank+1}</div>
+          <div class="bar-label">${label}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
+          <div class="bar-count">${count}명</div>
+        </div>
+        ${names && names.length ? `<div class="bar-names">${names.join(", ")}</div>` : ""}
+      </div>
+    `;
+  }
+
+  // ---------- ADMIN SCREEN ----------
+  function renderAdminScreen(){
+    const body = document.getElementById("screen-body");
+    if(!body) return;
+    const members = (state.roomConfig && state.roomConfig.members) || [];
+    const adminName = members[0];
+    if(state.currentUser !== adminName){
+      body.innerHTML = `
+        <div class="card gate">
+          <div style="font-size:26px;">🔒</div>
+          <div class="t">${adminName||"관리자"}님만 볼 수 있는 화면입니다.</div>
+          <div class="s">투표 화면에서 내 이름을 '${adminName||"-"}'(으)로 선택하면 볼 수 있어요.</div>
+        </div>
+      `;
+      return;
+    }
+    const votedCount = Object.keys(state.allVotes).length;
+    const notVoted = members.filter(m => !(state.allVotes[m] && state.allVotes[m].submittedAt));
+    body.innerHTML = `
+      <div class="admin-top">
+        <div style="font-size:13px;font-weight:700;">투표 현황 (${votedCount}/${members.length})</div>
+        <button class="refresh-link" id="refreshBtn">⟳ 새로고침</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        ${members.map(m=>{
+          const voted = !!(state.allVotes[m] && state.allVotes[m].submittedAt);
+          return `<div class="admin-row"><span style="font-size:14px;font-weight:600;">${m}</span>${voted?`<span class="voted">✓ 투표완료</span>`:`<span class="notvoted">미투표</span>`}</div>`;
+        }).join("")}
+      </div>
+      ${notVoted.length? `<div class="missing-box">아직 투표 안 한 사람: ${notVoted.join(", ")}</div>` : ""}
+      <div class="section-label">개인별 응답 상세</div>
+      ${Object.entries(state.allVotes).map(([name,v])=>`
+        <div class="detail-card">
+          <div style="font-size:13px;font-weight:700;">${name}</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px;">
+            날짜: ${(v.dates||[]).map(fmtLabel).join(", ")||"-"} · 시간: ${(v.times||[]).join(", ")||"-"} · 지역: ${(v.regions&&v.regions.length)?v.regions.join(", "):(v.region||"-")}
+          </div>
+          ${v.memo?`<div style="font-size:11px;color:var(--purpleDark);margin-top:2px;">메모: ${v.memo}</div>`:""}
+        </div>
+      `).join("")}
+    `;
+    document.getElementById("refreshBtn").addEventListener("click", loadAllVotes);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
