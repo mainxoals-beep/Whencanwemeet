@@ -207,6 +207,7 @@
     quickActive: new Set(),
     landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" },
     pinInput: "",
+    identityConfirmed: false,
     pinChangeMode: false,
     newPinInput: "",
   };
@@ -243,11 +244,12 @@
   }
 
   // Gates whether the rest of the form (dates/times/regions/memo/submit) is even shown.
-  // "create" mode has nothing to protect yet, so it's open right away.
+  // "create" mode (not voted yet) still requires an explicit "this is really me" confirmation,
+  // so someone can't casually click through an unvoted teammate's name and submit for them.
   // "verify" mode (already voted) requires the correct 4-digit pin before anything is revealed.
   function isFormUnlocked(){
     if(!state.currentUser) return false;
-    if(getPinMode()==="create") return true;
+    if(getPinMode()==="create") return !!state.identityConfirmed;
     const existing = state.allVotes[state.currentUser];
     return state.pinInput.length===4 && state.pinInput === existing.pin;
   }
@@ -370,6 +372,7 @@
     state.pinInput = "";
     state.pinChangeMode = false;
     state.newPinInput = "";
+    state.identityConfirmed = false;
     state.quickActive = new Set();
     renderVoteScreen();
   }
@@ -664,6 +667,12 @@
         </div>
         <div class="region-hint" style="margin-top:4px;">${getPinMode()==='verify' ? '이 이름으로 처음 투표할 때 만든 비밀번호를 맞게 입력해야 투표 내용을 보고 수정할 수 있어요.' : '이 번호로 나중에 내 투표를 다시 수정할 수 있어요. 잊지 않게 기억해두세요.'}</div>
         <div id="pinFeedback" style="margin-top:4px;font-size:11px;font-weight:700;"></div>
+        ${getPinMode()==='create' ? `
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:12px;color:var(--ink);font-weight:700;cursor:pointer;">
+          <input id="identityConfirmCheck" type="checkbox" ${state.identityConfirmed?"checked":""} style="margin-top:2px;width:16px;height:16px;flex:none;" />
+          <span>저는 <b style="color:var(--purpleDark);">${state.currentUser}</b> 본인이 맞습니다. 다른 사람 이름으로 대신 투표하지 않을게요.</span>
+        </label>
+        ` : ""}
         ${getPinMode()==='verify' ? `
         <button id="pinChangeToggleBtn" type="button" class="refresh-link" style="margin-top:10px;">${state.pinChangeMode ? '취소' : '🔑 비밀번호 변경하기'}</button>
         <div id="pinChangeBox" style="display:${state.pinChangeMode?"block":"none"};margin-top:8px;">
@@ -782,6 +791,17 @@
       input.type = showing ? "password" : "text";
       e.currentTarget.textContent = showing ? "보기" : "숨기기";
     });
+    const identityConfirmCheck = document.getElementById("identityConfirmCheck");
+    if(identityConfirmCheck){
+      identityConfirmCheck.addEventListener("change", e=>{
+        const wasUnlocked = isFormUnlocked();
+        state.identityConfirmed = e.target.checked;
+        const nowUnlocked = isFormUnlocked();
+        if(wasUnlocked !== nowUnlocked){
+          renderVoteScreen();
+        }
+      });
+    }
     const pinChangeToggleBtn = document.getElementById("pinChangeToggleBtn");
     if(pinChangeToggleBtn){
       pinChangeToggleBtn.addEventListener("click", ()=>{
