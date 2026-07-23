@@ -1150,13 +1150,26 @@
       if(c>heatMax) heatMax = c;
     }));
 
+    const regionCountsAmong = (namesSubset) => REGIONS.map(r=>{
+      const c = namesSubset.filter(n=>{
+        const v = state.allVotes[n];
+        return v.regions ? v.regions.includes(r.name) : v.region === r.name;
+      }).length;
+      return { region: r.name, count: c };
+    }).filter(r=>r.count>0).sort((a,b)=>b.count-a.count);
+
     const medals = ["🥇","🥈","🥉"];
     body.innerHTML = `
       <div class="stat-hero"><div><div class="lbl">참여 현황</div><div class="val">${total}명 중 ${votedNames.length}명 참여</div></div>👥</div>
 
+      <div class="section-label">📍 선호 지역</div>
+      <div class="rec-card" style="margin-bottom:14px;">
+        <div class="rec-sub">${allRegionCounts.filter(r=>r.count>0).length===0 ? "아직 선택된 지역이 없어요." : allRegionCounts.filter(r=>r.count>0).slice(0,5).map((r,i)=>`${i+1}위 ${r.region} ${r.count}명`).join(" · ")}</div>
+      </div>
+
       <div class="section-label">⭐ 추천 일정 (1~3순위)</div>
       ${topCombos.length===0 ? `<div class="rec-card"><div class="rec-sub">겹치는 날짜·시간이 아직 없어요.</div></div>` : topCombos.map((c,i)=>{
-        const d = dateList.length ? { label: fmtLabel(c.date), wd: weekdayOf(c.date) } : null;
+        const comboRegions = regionCountsAmong(c.names);
         return `
         <div class="rec-card" style="margin-bottom:10px;">
           <div class="rec-title">${medals[i]} ${i+1}순위</div>
@@ -1165,6 +1178,7 @@
             <span class="rec-time">${c.time}</span>
           </div>
           <div class="rec-sub">모두 가능한 인원 <b>${c.count}명</b> · ${c.names.join(", ")}</div>
+          <div class="rec-sub">선호 지역: ${comboRegions.length? comboRegions.slice(0,3).map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
         </div>
         `;
       }).join("")}
