@@ -84,7 +84,7 @@
   .bar-names{font-size:11px;color:var(--gray);padding-left:28px;margin-top:-4px;}
   .bar-rank{width:16px;font-size:11px;font-weight:800;color:var(--gray);}
   .bar-rank.top{color:var(--terracotta);}
-  .bar-label{width:78px;font-size:12px;font-weight:700;}
+  .bar-label{width:104px;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1.25;}
   .bar-track{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden;}
   .bar-fill{height:100%;border-radius:6px;}
   .bar-count{width:40px;text-align:right;font-size:11px;font-weight:800;}
@@ -1149,6 +1149,9 @@
         `;
       }).join("")}
 
+      <div class="section-label">📋 날짜·시간 조합별 가능 인원 (전체 ${comboList.length}개)</div>
+      <div>${comboList.map((c,i)=>barRow(`${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time}`, c.count, total, i, "var(--purple)", c.names)).join("")}</div>
+
       <div class="section-label">📅 날짜별 가능 인원 (전체 ${dateCounts.length}개)</div>
       <div>${dateCounts.map((d,i)=>barRow(`${d.label}(${d.wd})`, d.count, total, i, "var(--purple)", d.names)).join("")}</div>
 
@@ -1280,7 +1283,7 @@
         </div>
       `).join("")}
     `;
-    document.getElementById("refreshBtn").addEventListener("click", loadAllVotes);_
+    document.getElementById("refreshBtn").addEventListener("click", loadAllVotes);
   }
 
   render();
