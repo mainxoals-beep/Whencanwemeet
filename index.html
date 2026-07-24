@@ -11,105 +11,123 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <style>
   :root{
-    --purple:#7C6AE6; --purpleDark:#5B4B9A; --terracotta:#E07A5F;
-    --ivory:#FAF8F4; --ink:#2B2438; --line:#E8E4F0; --gray:#8A8398;
-    --green:#3E9A6D; --redbg:#FCEDEA; --red:#B14A34;
+    --purple:#4F46E5; --purpleDark:#4338CA; --terracotta:#4F46E5;
+    --ivory:#F8FAFC; --ink:#111827; --line:#E5E7EB; --gray:#6B7280;
+    --green:#22C55E; --redbg:#FEF2F2; --red:#EF4444;
+    --primaryLight:#F3F4FF; --primaryDisabled:#C7D2FE; --recCardBg:#EEF2FF;
+    --warning:#F59E0B; --warningBg:#FFFBEB; --warningText:#92400E;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--ivory);font-family:'Pretendard','Noto Sans KR',-apple-system,sans-serif;color:var(--ink);}
-  .wrap{max-width:460px;margin:0 auto;padding:28px 16px 60px;}
+  .wrap{max-width:460px;margin:0 auto;padding:32px 18px 64px;}
   .eyebrow{display:flex;align-items:center;gap:6px;color:var(--gray);font-size:12px;letter-spacing:.5px;margin-bottom:4px;}
-  h1{font-size:21px;font-weight:800;margin:0 0 20px;line-height:1.35;}
-  .tabs{display:flex;gap:4px;background:#F0ECFB;padding:4px;border-radius:16px;margin-bottom:18px;}
-  .tab{flex:1;padding:9px 0;border:none;background:transparent;border-radius:12px;font-size:13px;font-weight:700;color:var(--purpleDark);cursor:pointer;transition:.15s;}
-  .tab.active{background:var(--purple);color:#fff;}
-  .card{background:#fff;border-radius:16px;padding:16px;border:1px solid var(--line);}
-  .section-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:22px 0 10px;color:var(--ink);}
+  h1{font-size:22px;font-weight:800;margin:0 0 22px;line-height:1.35;letter-spacing:-.2px;}
+  .tabs{display:flex;gap:4px;background:var(--primaryLight);padding:5px;border-radius:16px;margin-bottom:20px;}
+  .tab{flex:1;padding:10px 0;border:none;background:transparent;border-radius:12px;font-size:13px;font-weight:700;color:var(--purpleDark);cursor:pointer;transition:.15s;}
+  .tab.active{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(79,70,229,.3);}
+  .card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);}
+  .section-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:26px 0 12px;color:var(--ink);}
   .section-label:first-child{margin-top:0;}
   select.name-select{width:100%;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);padding:4px 0 0;outline:none;}
   .name-label{font-size:12px;color:var(--gray);font-weight:600;}
-  .notice{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:12px;background:#F0ECFB;color:var(--purpleDark);display:flex;gap:6px;align-items:center;}
-  .error-box{margin-bottom:14px;padding:10px 12px;border-radius:12px;font-size:13px;background:var(--redbg);color:var(--red);display:flex;gap:6px;align-items:center;}
+  .notice{margin-top:10px;padding:12px 14px;border-radius:14px;font-size:12px;background:var(--primaryLight);color:var(--purpleDark);display:flex;gap:6px;align-items:center;}
+  .notice.success{background:#ECFDF3;color:#15803D;}
+  .error-box{margin-bottom:14px;padding:12px 14px;border-radius:14px;font-size:13px;background:var(--redbg);color:var(--red);display:flex;gap:6px;align-items:center;}
 
   /* Calendar */
-  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-  .cal-header button{border:none;background:#F0ECFB;color:var(--purpleDark);width:28px;height:28px;border-radius:8px;font-weight:800;cursor:pointer;}
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-header button{border:none;background:var(--primaryLight);color:var(--purpleDark);width:30px;height:30px;border-radius:10px;font-weight:800;cursor:pointer;}
   .cal-title{font-size:14px;font-weight:800;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-wd{text-align:center;font-size:10px;color:var(--gray);font-weight:700;padding-bottom:4px;}
-  .cal-day{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+  .cal-day{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
   .cal-day.empty{visibility:hidden;cursor:default;}
-  .cal-day.disabled{color:#D8D0E0;background:#FAF8FC;cursor:not-allowed;}
-  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);}
-  .cal-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+  .cal-day.disabled{color:#CBD5E1;background:#F1F5F9;cursor:not-allowed;}
+  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 2px 6px rgba(79,70,229,.3);}
+  .cal-hint{font-size:11px;color:var(--gray);margin-top:10px;}
   .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-  .quick-btn{padding:9px 0;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
+  .quick-btn{padding:10px 0;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
   .quick-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);}
-  .quick-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+  .quick-hint{font-size:11px;color:var(--gray);margin-top:10px;}
 
   /* Time grid */
-  .time-presets{display:flex;gap:6px;margin-bottom:8px;}
-  .preset-btn{flex:1;padding:7px 0;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
+  .time-presets{display:flex;gap:6px;margin-bottom:10px;}
+  .preset-btn{flex:1;padding:8px 0;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
   .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;touch-action:none;user-select:none;}
-  .time-cell{padding:10px 0;border-radius:10px;border:1px solid var(--line);background:#fff;text-align:center;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;}
-  .time-cell.active{background:var(--terracotta);color:#fff;border-color:var(--terracotta);}
-  .time-hint{font-size:11px;color:var(--gray);margin-top:8px;}
+  .time-cell{padding:10px 0;border-radius:12px;border:1px solid var(--line);background:#fff;text-align:center;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;}
+  .time-cell.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .time-hint{font-size:11px;color:var(--gray);margin-top:10px;}
 
   /* Region map */
-  #mapbox{width:100%;height:320px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
-  #resultMapbox{width:100%;height:340px;border-radius:14px;overflow:hidden;border:1px solid var(--line);}
+  #mapbox{width:100%;height:320px;border-radius:16px;overflow:hidden;border:1px solid var(--line);}
+  #resultMapbox{width:100%;height:340px;border-radius:16px;overflow:hidden;border:1px solid var(--line);}
   .region-label{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
   .region-label::before{display:none;}
   .region-picked{margin-top:10px;font-size:12px;color:var(--purpleDark);font-weight:700;}
   .region-hint{font-size:11px;color:var(--gray);margin-top:4px;}
 
-  textarea.memo{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);font-size:13px;color:var(--ink);resize:none;outline:none;font-family:inherit;}
+  textarea.memo{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-size:13px;color:var(--ink);resize:none;outline:none;font-family:inherit;}
 
-  .submit-btn{width:100%;margin-top:24px;padding:14px 0;border-radius:14px;border:none;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--ink);color:#fff;}
-  .submit-btn:disabled{background:var(--line);color:var(--gray);cursor:not-allowed;}
-  .helper{text-align:center;font-size:11px;color:var(--gray);margin-top:6px;}
+  .submit-btn{width:100%;margin-top:26px;padding:16px 0;border-radius:16px;border:none;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.28);transition:.15s;}
+  .submit-btn:not(:disabled):hover{background:var(--purpleDark);}
+  .submit-btn:disabled{background:var(--primaryDisabled);color:#fff;box-shadow:none;cursor:not-allowed;}
+  .submit-btn.saved{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
+  .helper{text-align:center;font-size:11px;color:var(--gray);margin-top:8px;}
+  .dt-helper{margin-top:8px;}
 
   /* Results */
-  .stat-hero{background:var(--ink);border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-  .stat-hero .lbl{color:#C9BFF0;font-size:12px;font-weight:600;}
+  .stat-hero{background:var(--ink);border-radius:18px;padding:20px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .stat-hero .lbl{color:#A5B4FC;font-size:12px;font-weight:600;}
   .stat-hero .val{color:#fff;font-size:19px;font-weight:800;}
-  .rec-card{border-radius:16px;padding:16px;border:1px solid var(--line);background:#fff;margin-bottom:18px;}
-  .rec-title{font-size:12px;color:var(--terracotta);font-weight:800;margin-bottom:6px;}
+  .rec-card{border-radius:16px;padding:18px;background:var(--recCardBg);margin-bottom:12px;}
+  .rec-title{font-size:12px;color:var(--purpleDark);font-weight:800;margin-bottom:6px;}
   .rec-main{display:flex;align-items:baseline;gap:10px;}
   .rec-date{font-size:22px;font-weight:800;}
   .rec-time{font-size:19px;font-weight:800;color:var(--purple);}
   .rec-sub{font-size:12px;color:var(--gray);margin-top:4px;}
-  .bar-row-wrap{margin-bottom:10px;}
+  .bar-row-wrap{margin-bottom:12px;}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
   .bar-names{font-size:11px;color:var(--gray);padding-left:28px;margin-top:-4px;}
   .bar-rank{width:16px;font-size:11px;font-weight:800;color:var(--gray);}
-  .bar-rank.top{color:var(--terracotta);}
+  .bar-rank.top{color:var(--purple);}
   .bar-label{width:104px;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1.25;}
   .bar-track{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden;}
-  .bar-fill{height:100%;border-radius:6px;}
+  .bar-fill{height:100%;border-radius:6px;background:var(--purple);}
   .bar-count{width:40px;text-align:right;font-size:11px;font-weight:800;}
   .heatmap-wrap{overflow-x:auto;}
   .heatmap-row{display:flex;align-items:center;margin-bottom:3px;}
   .heatmap-date{width:52px;font-size:11px;font-weight:700;flex-shrink:0;}
-  .heatmap-cell{width:30px;height:22px;margin:0 2px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
+  .heatmap-cell{width:30px;height:22px;margin:0 2px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
   .heatmap-hdr{display:flex;padding-left:52px;margin-bottom:4px;}
   .heatmap-hcell{width:30px;margin:0 2px;text-align:center;font-size:9px;color:var(--gray);flex-shrink:0;}
   .empty-note{text-align:center;padding:40px 0;color:var(--gray);font-size:13px;}
 
   /* Admin */
-  .gate{text-align:center;padding:30px 20px;margin-top:6px;}
-  .gate .t{font-size:13px;font-weight:700;margin-top:8px;}
+  .gate{text-align:center;padding:32px 20px;margin-top:6px;}
+  .gate .t{font-size:13px;font-weight:700;margin-top:10px;}
   .gate .s{font-size:12px;color:var(--gray);margin-top:4px;}
-  .admin-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--line);}
+  .admin-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--line);}
   .admin-row:first-child{border-top:none;}
   .voted{color:var(--green);font-size:12px;font-weight:700;}
-  .notvoted{color:var(--terracotta);font-size:12px;font-weight:700;}
-  .detail-card{border-radius:12px;padding:10px 12px;border:1px solid var(--line);background:#fff;margin-bottom:8px;}
+  .notvoted{color:var(--warningText);font-size:12px;font-weight:700;}
+  .detail-card{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:#fff;margin-bottom:8px;}
   .refresh-link{background:none;border:none;color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;}
-  .code-chip{background:#F0ECFB;border:none;color:var(--purpleDark);font-size:12px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:999px;}
-  .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .missing-box{margin-top:14px;padding:10px 12px;border-radius:12px;font-size:12px;background:var(--redbg);color:var(--red);}
+  .code-chip{background:var(--primaryLight);border:none;color:var(--purpleDark);font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:999px;}
+  .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .missing-box{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:12px;background:var(--warningBg);color:var(--warningText);}
   .loading{text-align:center;padding:80px 0;color:var(--gray);}
+
+  /* Finalize / share */
+  .finalize-card{border-radius:16px;padding:18px;background:#fff;border:2px solid var(--purple);margin-bottom:14px;}
+  .finalize-banner{border-radius:16px;padding:16px 18px;background:#ECFDF3;border:1px solid #BBF7D0;margin-bottom:18px;}
+  .finalize-banner .t{color:#15803D;font-size:12px;font-weight:800;margin-bottom:4px;}
+  .finalize-banner .m{color:var(--ink);font-size:17px;font-weight:800;}
+  .finalize-banner .s{color:#15803D;font-size:12px;margin-top:4px;}
+  .pick-btn{width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+  .pick-btn.selected{border-color:var(--purple);background:var(--primaryLight);}
+  .cta-green{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
+  .cta-green:hover{background:#16A34A;}
+  .share-btn{background:var(--primaryLight);color:var(--purpleDark);border:none;font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:999px;display:flex;align-items:center;gap:4px;}
 </style>
 </head>
 <body>
@@ -196,6 +214,7 @@
     currentUser: "",
     draft: { dates: [], times: [], regions: [], memo: "" },
     allVotes: {},
+    finalized: null, // { date, time, confirmedAt }
     loading: true,
     saving: false,
     saved: false,
@@ -261,6 +280,10 @@
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       state.allVotes = data || {};
+      try{
+        const fRes = await fetch(`${DB_URL}/rooms/${state.roomCode}/finalized.json?_=${Date.now()}`, { cache: "no-store" });
+        state.finalized = fRes.ok ? (await fRes.json()) : null;
+      }catch(e2){ /* non-fatal: finalized banner just won't show */ }
     }catch(e){
       state.error = "데이터를 불러오지 못했어요. 새로고침 버튼을 눌러주세요. (" + (e && e.message || e) + ")";
     }
@@ -269,6 +292,53 @@
     state.draft = toDraft(existing);
     state.quickActive = new Set();
     render();
+  }
+
+  // Shared by results screen and admin screen so both compute the same date+time combos.
+  function computeComboList(){
+    const votedNames = Object.keys(state.allVotes);
+    const dateSet = new Set();
+    votedNames.forEach(n => (state.allVotes[n].dates||[]).forEach(d=>dateSet.add(d)));
+    const dateList = Array.from(dateSet).sort();
+    const times = getTimes();
+    const comboList = [];
+    dateList.forEach(dk => {
+      times.forEach(t => {
+        const names = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t));
+        if(names.length>0) comboList.push({ date: dk, time: t, count: names.length, names });
+      });
+    });
+    comboList.sort((a,b)=>b.count-a.count);
+    return comboList;
+  }
+
+  async function finalizeSchedule(date, time){
+    state.error = "";
+    try{
+      const payload = { date, time, confirmedAt: new Date().toISOString(), confirmedBy: state.currentUser || "" };
+      const res = await fetch(`${DB_URL}/rooms/${state.roomCode}/finalized.json`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.finalized = payload;
+      renderAdminScreen();
+    }catch(e){
+      state.error = "일정 확정에 실패했어요. 다시 시도해주세요. (" + (e && e.message || e) + ")";
+      renderAdminScreen();
+    }
+  }
+
+  async function unfinalizeSchedule(){
+    state.error = "";
+    try{
+      const res = await fetch(`${DB_URL}/rooms/${state.roomCode}/finalized.json`, { method: "DELETE" });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.finalized = null;
+      renderAdminScreen();
+    }catch(e){
+      state.error = "확정 취소에 실패했어요. 다시 시도해주세요. (" + (e && e.message || e) + ")";
+      renderAdminScreen();
+    }
   }
 
   async function submitVote(){
@@ -354,10 +424,10 @@
     const body = document.getElementById("screen-body");
     if(!body) return;
     const alreadyVoted = !!(state.allVotes[state.currentUser] && state.allVotes[state.currentUser].submittedAt);
-    let notice = body.querySelector(".notice");
+    let notice = body.querySelector(".notice.success");
     if(alreadyVoted && !notice){
       notice = document.createElement("div");
-      notice.className = "notice";
+      notice.className = "notice success";
       notice.textContent = "✅ 이미 투표하셨어요. 수정하면 기존 응답이 갱신됩니다.";
       const nameCard = body.querySelector(".card");
       if(nameCard) nameCard.insertAdjacentElement("afterend", notice);
@@ -394,9 +464,16 @@
     let html = `
       <div class="eyebrow">📅 일정 투표</div>
       <h1>${state.roomConfig ? state.roomConfig.title : ""}</h1>
+      ${state.finalized ? `
+      <div class="finalize-banner">
+        <div class="t">✅ 확정된 일정</div>
+        <div class="m">${fmtLabel(state.finalized.date)} (${weekdayOf(state.finalized.date)}) ${state.finalized.time}</div>
+      </div>
+      ` : ""}
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
         <button id="switchRoomBtn" class="refresh-link">↺ 다른 모임 코드 입력</button>
         <button id="copyCodeBtn" class="code-chip">🔗 코드: ${state.roomCode} (복사)</button>
+        <button id="shareBtn" class="share-btn">📤 공유하기</button>
       </div>
       <div class="tabs">
         <button class="tab ${state.screen==='vote'?'active':''}" data-tab="vote">투표하기</button>
@@ -421,6 +498,7 @@
       render();
     });
     document.getElementById("copyCodeBtn").addEventListener("click", (e)=>copyCodeWithFeedback(state.roomCode, e.currentTarget, "🔗 코드"));
+    document.getElementById("shareBtn").addEventListener("click", (e)=>shareRoom(e.currentTarget));
 
     if(state.screen==="vote") renderVoteScreen();
     else if(state.screen==="results") renderResultsScreen();
@@ -617,6 +695,25 @@
     setTimeout(()=>{ btnEl.textContent = prev; }, 1600);
   }
 
+  async function shareRoom(btnEl){
+    const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
+    const shareText = `[일정 투표] ${title}\n아래 코드로 입장해서 투표해주세요!\n모임 코드: ${state.roomCode}\n${location.href}`;
+    if(navigator.share){
+      try{
+        await navigator.share({ title: "일정 투표 - " + title, text: shareText });
+        return;
+      }catch(e){
+        if(e && e.name === "AbortError") return; // user cancelled the share sheet, do nothing
+        // fall through to clipboard fallback below
+      }
+    }
+    const ok = await copyToClipboard(shareText);
+    if(!btnEl) return;
+    const prev = btnEl.textContent;
+    btnEl.textContent = ok ? "✓ 공유문구 복사됨!" : "복사 실패";
+    setTimeout(()=>{ btnEl.textContent = prev; }, 1800);
+  }
+
   function renderRoomCreatedScreen(){
     const title = state.roomConfig ? state.roomConfig.title : "";
     const members = (state.roomConfig && state.roomConfig.members) || [];
@@ -656,8 +753,8 @@
         </select>
       </div>
       ${!nameChosen ? `<div class="helper" style="margin-top:10px;">먼저 이름을 선택하면 투표 항목이 나타나요.</div>` : ""}
-      ${nameChosen && alreadyVoted?`<div class="notice">✅ 이미 투표하셨어요. 비밀번호를 확인하면 수정할 수 있어요.</div>`:""}
-      ${nameChosen ? `<div class="notice" style="background:#FAF8F4;color:var(--gray);">📌 투표 가능 범위: ${(state.roomConfig&&state.roomConfig.dateStart)?state.roomConfig.dateStart:"제한 없음"} ~ ${(state.roomConfig&&state.roomConfig.dateEnd)?state.roomConfig.dateEnd:"제한 없음"} · ${String(state.roomConfig?state.roomConfig.hourStart:10).padStart(2,"0")}:00~${String(state.roomConfig?state.roomConfig.hourEnd:21).padStart(2,"0")}:00</div>` : ""}
+      ${nameChosen && alreadyVoted?`<div class="notice success">✅ 이미 투표하셨어요. 비밀번호를 확인하면 수정할 수 있어요.</div>`:""}
+      ${nameChosen ? `<div class="notice" style="background:#fff;border:1px solid var(--line);color:var(--gray);">📌 투표 가능 범위: ${(state.roomConfig&&state.roomConfig.dateStart)?state.roomConfig.dateStart:"제한 없음"} ~ ${(state.roomConfig&&state.roomConfig.dateEnd)?state.roomConfig.dateEnd:"제한 없음"} · ${String(state.roomConfig?state.roomConfig.hourStart:10).padStart(2,"0")}:00~${String(state.roomConfig?state.roomConfig.hourEnd:21).padStart(2,"0")}:00</div>` : ""}
       ${nameChosen ? `
       <div class="card" style="margin-top:10px;">
         <div class="name-label">${getPinMode()==='verify' ? '🔒 비밀번호 입력 (다른 사람 투표를 보호해요)' : '🔒 비밀번호 만들기 (숫자 4자리)'}</div>
@@ -738,7 +835,7 @@
         <div class="section-label">✏️ 메모 (선택)</div>
         <textarea class="memo" id="memoInput" rows="3" placeholder="전달하고 싶은 내용이 있다면 적어주세요">${state.draft.memo||""}</textarea>
 
-        <button class="submit-btn" id="submitBtn" ${state.saving||state.draft.dates.length===0||state.draft.times.length===0||!isPinValid()?"disabled":""}>
+        <button class="submit-btn ${state.saved?"saved":""}" id="submitBtn" ${state.saving||state.draft.dates.length===0||state.draft.times.length===0||!isPinValid()?"disabled":""}>
           ${state.saving?"저장 중...":(state.saved?"✓ 투표 완료":"투표하기")}
         </button>
         ${(state.draft.dates.length===0||state.draft.times.length===0)?`<div class="helper">날짜와 시간을 최소 1개씩 선택해주세요</div>`:""}
@@ -1032,6 +1129,7 @@
       const disabled = state.saving || state.draft.dates.length===0 || state.draft.times.length===0 || !isPinValid();
       btn.disabled = disabled;
       btn.textContent = state.saving ? "저장 중..." : (state.saved ? "✓ 투표 완료" : "투표하기");
+      btn.classList.toggle("saved", !!state.saved);
     }
     const body = document.getElementById("screen-body");
     const shouldShowHelper = state.draft.dates.length===0 || state.draft.times.length===0;
@@ -1058,8 +1156,8 @@
     const makeIcon = (isSelected, name) => L.divIcon({
       className: "",
       html: `<div style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <div style="width:${isSelected?14:10}px;height:${isSelected?14:10}px;border-radius:50%;background:${isSelected?'#E07A5F':'#7C6AE6'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);flex:none;"></div>
-        <div style="background:#fff;border:1px solid ${isSelected?'#E07A5F':'var(--line)'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:${isSelected?'#E07A5F':'var(--ink)'};box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;">${name}</div>
+        <div style="width:${isSelected?14:10}px;height:${isSelected?14:10}px;border-radius:50%;background:${isSelected?'#4F46E5':'#94A3B8'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);flex:none;"></div>
+        <div style="background:#fff;border:1px solid ${isSelected?'#4F46E5':'var(--line)'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:${isSelected?'#4F46E5':'var(--ink)'};box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;">${name}</div>
       </div>`,
       iconSize: [110, 20], iconAnchor: [7, 10],
     });
@@ -1207,8 +1305,8 @@
             const cells = times.map(t=>{
               const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
               const op = c===0 ? 1 : 0.25 + (c/heatMax)*0.75;
-              const bg = c===0 ? "#F0ECFB" : "#7C6AE6";
-              const col = c===0 ? "#D8D0F0" : "#fff";
+              const bg = c===0 ? "#F3F4FF" : "#4F46E5";
+              const col = c===0 ? "#C7D2FE" : "#fff";
               return `<div class="heatmap-cell" style="background:${bg};opacity:${op};color:${col};">${c>0?c:""}</div>`;
             }).join("");
             return `<div class="heatmap-row"><div class="heatmap-date">${fmtLabel(dk)}</div>${cells}</div>`;
@@ -1243,7 +1341,7 @@
       if(count === 0) return; // only plot regions that actually received votes
       anyVoted = true;
       const intensity = count / maxCount;
-      const bg = count === maxCount ? "#E07A5F" : "#7C6AE6";
+      const bg = count === maxCount ? "#22C55E" : "#4F46E5";
       const icon = L.divIcon({
         className: "",
         html: `<div style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;opacity:${0.55+intensity*0.45};">${shortRegionName(r.name)} ${count}명</div>`,
@@ -1306,6 +1404,31 @@
         }).join("")}
       </div>
       ${notVoted.length? `<div class="missing-box">아직 투표 안 한 사람: ${notVoted.join(", ")}</div>` : ""}
+
+      <div class="section-label">일정 확정하기</div>
+      ${state.finalized ? `
+        <div class="finalize-banner">
+          <div class="t">✅ 확정된 일정</div>
+          <div class="m">${fmtLabel(state.finalized.date)} (${weekdayOf(state.finalized.date)}) ${state.finalized.time}</div>
+          <div class="s">모든 화면 상단에 이 일정이 참석자들에게 표시돼요.</div>
+        </div>
+        <button class="submit-btn" id="unfinalizeBtn" style="background:#fff;color:var(--red);border:1px solid var(--red);box-shadow:none;margin-top:0;">확정 취소하기</button>
+      ` : (() => {
+        const combos = computeComboList().slice(0,5);
+        if(combos.length===0) return `<div class="card"><div class="rec-sub">아직 겹치는 날짜·시간이 없어서 확정할 후보가 없어요.</div></div>`;
+        return `
+          <div class="card">
+            <div class="name-label" style="margin-bottom:10px;">가능 인원이 많은 순서로 후보를 보여드려요. 하나를 선택해서 확정하세요.</div>
+            ${combos.map((c,i)=>`
+              <button class="pick-btn" data-date="${c.date}" data-time="${c.time}">
+                <span>${i+1}. ${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time}</span>
+                <span style="font-weight:800;color:var(--purple);">${c.count}명</span>
+              </button>
+            `).join("")}
+          </div>
+        `;
+      })()}
+
       <div class="section-label">개인별 응답 상세</div>
       ${Object.entries(state.allVotes).map(([name,v])=>`
         <div class="detail-card">
@@ -1318,6 +1441,11 @@
       `).join("")}
     `;
     document.getElementById("refreshBtn").addEventListener("click", loadAllVotes);
+    const unfinalizeBtn = document.getElementById("unfinalizeBtn");
+    if(unfinalizeBtn) unfinalizeBtn.addEventListener("click", unfinalizeSchedule);
+    document.querySelectorAll(".pick-btn").forEach(b=>{
+      b.addEventListener("click", ()=>finalizeSchedule(b.dataset.date, b.dataset.time));
+    });
   }
 
   render();
