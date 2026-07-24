@@ -3,13 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>일정 투표 도구</title>
+<title>Whencanwemeet</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#D97706" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Whencanwemeet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
@@ -493,6 +501,7 @@
       state.error = "";
       render();
       window.scrollTo(0, 0);
+      fireConfetti();
       return;
     }else{
       const reason = (lastErr && (lastErr.message || String(lastErr))) || "알 수 없는 오류";
@@ -1068,6 +1077,17 @@
       if(btnEl) btnEl.textContent = "실패";
     }
     setTimeout(()=>{ if(btnEl && document.body.contains(btnEl)) btnEl.textContent = prev; }, 2200);
+  }
+
+  function fireConfetti(){
+    if(typeof confetti !== "function") return;
+    confetti({
+      particleCount: 90,
+      spread: 75,
+      startVelocity: 38,
+      origin: { y: 0.5 },
+      colors: ["#D97706", "#B45309", "#FDE68A", "#15803D", "#FFFFFF"],
+    });
   }
 
   async function handleSend(kind, btnEl){
@@ -2060,6 +2080,13 @@
 
   render();
 })();
+</script>
+<script>
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+  }
 </script>
 </body>
 </html>
