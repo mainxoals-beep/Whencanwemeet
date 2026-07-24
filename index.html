@@ -524,7 +524,7 @@
       render();
     });
     document.getElementById("copyCodeBtn").addEventListener("click", (e)=>copyCodeWithFeedback(state.roomCode, e.currentTarget, "🔗 코드"));
-    document.getElementById("shareBtn").addEventListener("click", (e)=>shareRoom(e.currentTarget));
+    document.getElementById("shareBtn").addEventListener("click", openShareMenu);
 
     if(state.screen==="vote") renderVoteScreen();
     else if(state.screen==="results") renderResultsScreen();
@@ -721,45 +721,95 @@
     setTimeout(()=>{ btnEl.textContent = prev; }, 1600);
   }
 
-  async function shareRoom(btnEl){
+  function buildInviteText(){
     const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
-    const link = location.href;
-    let shareText;
+    return `[일정 투표] ${title}\n아래 코드로 입장해서 투표해주세요!\n모임 코드: ${state.roomCode}\n${location.href}`;
+  }
 
-    if(state.finalized){
-      const f = state.finalized;
-      shareText = `[확정된 일정] ${title}\n📅 ${fmtLabel(f.date)}(${weekdayOf(f.date)}) ${f.time}` +
-        (f.region ? `\n📍 ${f.region}` : "") +
-        (f.count ? `\n👥 참여 인원 ${f.count}명` : "") +
-        `\n\n자세히 보기: ${link}\n모임 코드: ${state.roomCode}`;
-    }else{
-      const votedNames = Object.keys(state.allVotes);
-      const combos = votedNames.length ? computeComboList() : [];
-      if(combos.length){
-        const top = combos[0];
-        const topRegion = regionCountsAmong(top.names)[0];
-        shareText = `[일정 투표 현황] ${title}\n현재 1위: ${fmtLabel(top.date)}(${weekdayOf(top.date)}) ${top.time} · 가능 인원 ${top.count}명` +
-          (topRegion ? `\n선호 지역 1위: ${topRegion.region} (${topRegion.count}명)` : "") +
-          `\n\n아직 투표 안 하셨다면 참여해주세요: ${link}\n모임 코드: ${state.roomCode}`;
-      }else{
-        shareText = `[일정 투표] ${title}\n아래 코드로 입장해서 투표해주세요!\n모임 코드: ${state.roomCode}\n${link}`;
-      }
-    }
+  function buildFinalizedText(){
+    const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
+    const f = state.finalized;
+    if(!f) return null;
+    return `[확정된 일정] ${title}\n📅 ${fmtLabel(f.date)}(${weekdayOf(f.date)}) ${f.time}` +
+      (f.region ? `\n📍 ${f.region}` : "") +
+      (f.count ? `\n👥 참여 인원 ${f.count}명` : "") +
+      `\n\n자세히 보기: ${location.href}\n모임 코드: ${state.roomCode}`;
+  }
 
+  function buildSummaryText(){
+    const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
+    const votedNames = Object.keys(state.allVotes);
+    if(!votedNames.length) return null;
+    const combos = computeComboList();
+    if(!combos.length) return null;
+    const top = combos[0];
+    const topRegion = regionCountsAmong(top.names)[0];
+    return `[일정 투표 현황] ${title}\n현재 1위: ${fmtLabel(top.date)}(${weekdayOf(top.date)}) ${top.time} · 가능 인원 ${top.count}명` +
+      (topRegion ? `\n선호 지역 1위: ${topRegion.region} (${topRegion.count}명)` : "") +
+      `\n\n아직 투표 안 하셨다면 참여해주세요: ${location.href}\n모임 코드: ${state.roomCode}`;
+  }
+
+  async function doShare(text, feedbackEl){
+    const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
     if(navigator.share){
       try{
-        await navigator.share({ title: "일정 투표 - " + title, text: shareText });
-        return;
+        await navigator.share({ title: "일정 투표 - " + title, text });
+        return true;
       }catch(e){
-        if(e && e.name === "AbortError") return; // user cancelled the share sheet, do nothing
+        if(e && e.name === "AbortError") return false; // user cancelled the native share sheet
         // fall through to clipboard fallback below
       }
     }
-    const ok = await copyToClipboard(shareText);
-    if(!btnEl) return;
-    const prev = btnEl.textContent;
-    btnEl.textContent = ok ? "✓ 공유문구 복사됨!" : "복사 실패";
-    setTimeout(()=>{ btnEl.textContent = prev; }, 1800);
+    const ok = await copyToClipboard(text);
+    if(feedbackEl){
+      const prev = feedbackEl.textContent;
+      feedbackEl.textContent = ok ? "✓ 복사됨!" : "복사 실패";
+      setTimeout(()=>{ if(document.body.contains(feedbackEl)) feedbackEl.textContent = prev; }, 1400);
+    }
+    return ok;
+  }
+
+  function closeShareMenu(){
+    const overlay = document.getElementById("shareOverlay");
+    if(overlay) overlay.remove();
+  }
+
+  function openShareMenu(){
+    closeShareMenu();
+    const hasFinalized = !!state.finalized;
+    const hasVotes = Object.keys(state.allVotes).length > 0;
+    const overlay = document.createElement("div");
+    overlay.id = "shareOverlay";
+    overlay.style.cssText = "position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:1000;display:flex;align-items:flex-end;justify-content:center;";
+    overlay.innerHTML = `
+      <div style="width:100%;max-width:460px;background:#fff;border-radius:20px 20px 0 0;padding:20px 18px 26px;">
+        <div style="width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 16px;"></div>
+        <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px;">무엇을 공유할까요?</div>
+        <button class="pick-btn" id="shareInviteBtn"><span>🔗 초대 링크 + 코드</span><span style="color:var(--gray);">›</span></button>
+        <button class="pick-btn" id="shareFinalizedBtn" ${hasFinalized?"":"disabled"} style="${hasFinalized?"":"opacity:.45;cursor:not-allowed;"}"><span>✅ 확정된 일정</span><span style="color:var(--gray);">${hasFinalized?"›":"(아직 없음)"}</span></button>
+        <button class="pick-btn" id="shareSummaryBtn" ${hasVotes?"":"disabled"} style="${hasVotes?"":"opacity:.45;cursor:not-allowed;"}"><span>📊 현재 결과 요약</span><span style="color:var(--gray);">${hasVotes?"›":"(투표 없음)"}</span></button>
+        <button class="refresh-link" id="shareCancelBtn" style="width:100%;justify-content:center;margin-top:6px;padding:10px 0;">취소</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", (e)=>{ if(e.target===overlay) closeShareMenu(); });
+    document.getElementById("shareCancelBtn").addEventListener("click", closeShareMenu);
+    document.getElementById("shareInviteBtn").addEventListener("click", async (e)=>{
+      await doShare(buildInviteText(), e.currentTarget.querySelector("span"));
+      setTimeout(closeShareMenu, 500);
+    });
+    if(hasFinalized){
+      document.getElementById("shareFinalizedBtn").addEventListener("click", async (e)=>{
+        await doShare(buildFinalizedText(), e.currentTarget.querySelector("span"));
+        setTimeout(closeShareMenu, 500);
+      });
+    }
+    if(hasVotes){
+      document.getElementById("shareSummaryBtn").addEventListener("click", async (e)=>{
+        await doShare(buildSummaryText(), e.currentTarget.querySelector("span"));
+        setTimeout(closeShareMenu, 500);
+      });
+    }
   }
 
   function renderRoomCreatedScreen(){
@@ -1344,22 +1394,29 @@
       </div>
       ${topCombos.length===0 ? `<div class="rec-card"><div class="rec-sub">겹치는 날짜·시간이 아직 없어요.</div></div>` : topCombos.map((c,i)=>{
         const comboRegions = regionCountsAmong(c.names);
+        const notAvailable = votedNames.filter(n => !c.names.includes(n));
         return `
-        <div class="rec-card" style="margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;">
-          <div style="font-size:30px;line-height:1;flex:none;">${medals[i]}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="rec-main">
-              <span class="rec-date">${fmtLabel(c.date)} (${weekdayOf(c.date)})</span>
-              <span class="rec-time">${c.time}</span>
+        <div class="rec-card" style="margin-bottom:10px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <div style="font-size:30px;line-height:1;flex:none;">${medals[i]}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="rec-main">
+                <span class="rec-date">${fmtLabel(c.date)} (${weekdayOf(c.date)})</span>
+                <span class="rec-time">${c.time}</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">👤 모두 가능한 인원 ${c.count}명</span>
+                <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">📍 선호 지역 ${comboRegions.length}개</span>
+              </div>
+              <div class="rec-sub" style="margin-top:10px;">참여자: ${c.names.join(", ")}</div>
+              <div class="rec-sub">선호 지역: ${comboRegions.length? comboRegions.slice(0,3).map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
             </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-              <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">👤 모두 가능한 인원 ${c.count}명</span>
-              <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">📍 선호 지역 ${comboRegions.length}개</span>
-            </div>
-            <div class="rec-sub" style="margin-top:10px;">참여자: ${c.names.join(", ")}</div>
-            <div class="rec-sub">선호 지역: ${comboRegions.length? comboRegions.slice(0,3).map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
+            <button class="rec-toggle" id="rec-toggle-${i}" data-idx="${i}" type="button" style="background:none;border:none;color:var(--purple);font-size:18px;flex:none;cursor:pointer;padding:2px 4px;transition:transform .15s;">›</button>
           </div>
-          <div style="color:var(--gray);font-size:16px;flex:none;">›</div>
+          <div id="rec-extra-${i}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(79,70,229,.15);">
+            <div class="rec-sub" style="margin-top:0;"><b>지역 선호 전체</b> — ${comboRegions.length? comboRegions.map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
+            <div class="rec-sub">${notAvailable.length ? `<b>이 시간에 안 되는 사람</b> — ${notAvailable.join(", ")}` : "전원 참여 가능한 일정이에요."}</div>
+          </div>
         </div>
         `;
       }).join("")}
@@ -1398,6 +1455,16 @@
       </div>
     `;
     buildResultsMap(allRegionCounts);
+    document.querySelectorAll(".rec-toggle").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const idx = btn.dataset.idx;
+        const extra = document.getElementById(`rec-extra-${idx}`);
+        if(!extra) return;
+        const isHidden = extra.style.display === "none";
+        extra.style.display = isHidden ? "block" : "none";
+        btn.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+      });
+    });
     ["combo-list","date-list","time-list","region-list"].forEach(wireCollapsible);
   }
 
