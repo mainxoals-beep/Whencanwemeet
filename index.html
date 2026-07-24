@@ -103,9 +103,9 @@
   .bar-count{width:40px;text-align:right;font-size:11px;font-weight:800;}
   .heatmap-wrap{overflow-x:auto;}
   .heatmap-row{display:flex;align-items:center;margin-bottom:3px;}
-  .heatmap-date{width:52px;font-size:11px;font-weight:700;flex-shrink:0;}
+  .heatmap-date{width:52px;font-size:11px;font-weight:700;flex-shrink:0;position:sticky;left:0;background:#fff;z-index:2;padding-right:4px;}
   .heatmap-cell{width:30px;height:22px;margin:0 2px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0;}
-  .heatmap-hdr{display:flex;padding-left:52px;margin-bottom:4px;}
+  .heatmap-hdr{display:flex;margin-bottom:4px;}
   .heatmap-hcell{width:30px;margin:0 2px;text-align:center;font-size:9px;color:var(--gray);flex-shrink:0;}
   .empty-note{text-align:center;padding:40px 0;color:var(--gray);font-size:13px;}
 
@@ -132,6 +132,8 @@
   .finalize-banner .s{color:#15803D;font-size:12px;margin-top:4px;}
   .pick-btn{width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
   .pick-btn.selected{border-color:var(--purple);background:var(--primaryLight);}
+  .share-send-btn{background:var(--purple);color:#fff;border:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;flex:none;}
+  .share-send-btn:active{background:var(--purpleDark);}
   .cta-green{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
   .cta-green:hover{background:#16A34A;}
   .share-btn{background:var(--primaryLight);color:var(--purpleDark);border:none;font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:999px;display:flex;align-items:center;gap:4px;}
@@ -231,7 +233,7 @@
     map: null,
     markers: {},
     quickActive: new Set(),
-    landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" },
+    landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() },
     pinInput: "",
     identityConfirmed: false,
     pinChangeMode: false,
@@ -532,12 +534,91 @@
   }
 
   // ---------- LANDING SCREEN (room join / create) ----------
+  function shiftRangeMonth(delta){
+    let m = state.landingDraft.rangeCalMonth + delta, y = state.landingDraft.rangeCalYear;
+    if(m<0){m=11;y--;} if(m>11){m=0;y++;}
+    state.landingDraft.rangeCalMonth = m; state.landingDraft.rangeCalYear = y;
+    const title = document.getElementById("rangeCalTitle");
+    if(title) title.textContent = `${y}년 ${m+1}월`;
+    buildRangeCalendar();
+  }
+
+  function buildRangeCalendar(){
+    const grid = document.getElementById("rangeCalGrid");
+    if(!grid) return;
+    const y = state.landingDraft.rangeCalYear, m = state.landingDraft.rangeCalMonth;
+    const firstDay = new Date(y,m,1).getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const { dateStart, dateEnd } = state.landingDraft;
+    let html = WD.map(w=>`<div class="cal-wd">${w}</div>`).join("");
+    for(let i=0;i<firstDay;i++) html += `<div class="cal-day empty"></div>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const key = dkey(y,m,d);
+      const isStart = key===dateStart;
+      const isEnd = key===dateEnd;
+      const inRange = dateStart && dateEnd && key>dateStart && key<dateEnd;
+      let cls = "cal-day";
+      let style = "";
+      if(isStart || isEnd){ style = "background:var(--purple);color:#fff;border-color:var(--purple);"; }
+      else if(inRange){ style = "background:var(--primaryLight);color:var(--purpleDark);border-color:var(--primaryLight);"; }
+      html += `<div class="${cls}" data-key="${key}" style="${style}">${d}</div>`;
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll(".cal-day:not(.empty)").forEach(cell=>{
+      cell.addEventListener("click", ()=>{
+        const key = cell.dataset.key;
+        let { dateStart, dateEnd } = state.landingDraft;
+        if(!dateStart || (dateStart && dateEnd)){
+          // starting a fresh selection
+          state.landingDraft.dateStart = key;
+          state.landingDraft.dateEnd = "";
+        }else{
+          // we already have a start, this click sets the other end (swap if picked an earlier date)
+          if(key < dateStart){
+            state.landingDraft.dateEnd = dateStart;
+            state.landingDraft.dateStart = key;
+          }else{
+            state.landingDraft.dateEnd = key;
+          }
+        }
+        buildRangeCalendar();
+        const hint = document.getElementById("rangeHint");
+        if(hint){
+          const s = state.landingDraft.dateStart, e = state.landingDraft.dateEnd;
+          hint.textContent = (s||e) ? `선택됨: ${s||"?"} ~ ${e||"(끝나는 날짜를 눌러주세요)"}` : "시작 날짜를 먼저 누르고, 끝나는 날짜를 눌러주세요.";
+        }
+        // show/hide the reset button depending on whether anything is selected now
+        const hasSelection = !!(state.landingDraft.dateStart || state.landingDraft.dateEnd);
+        let resetBtn = document.getElementById("rangeResetBtn");
+        if(hasSelection && !resetBtn){
+          resetBtn = document.createElement("button");
+          resetBtn.id = "rangeResetBtn"; resetBtn.type = "button";
+          resetBtn.className = "refresh-link"; resetBtn.style.marginTop = "6px";
+          resetBtn.textContent = "↺ 범위 초기화";
+          resetBtn.addEventListener("click", ()=>{
+            state.landingDraft.dateStart = ""; state.landingDraft.dateEnd = "";
+            renderLandingScreen();
+          });
+          document.getElementById("rangeHint").insertAdjacentElement("afterend", resetBtn);
+        }
+      });
+    });
+  }
+
   function updateMemberCount(){
     const el = document.getElementById("memberCount");
+    const preview = document.getElementById("memberPreview");
     const input = document.getElementById("newMembersInput");
-    if(!el || !input) return;
-    const count = input.value.split("\n").map(s=>s.trim()).filter(Boolean).length;
-    el.textContent = count > 0 ? `${count}명 입력됨` : "";
+    if(!input) return;
+    const names = input.value.split("\n").map(s=>s.trim()).filter(Boolean);
+    if(el) el.textContent = names.length > 0 ? `${names.length}명 입력됨` : "";
+    if(preview){
+      preview.innerHTML = names.length ? names.map((n,i)=>
+        i===0
+          ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--primaryLight);color:var(--purpleDark);font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;margin:2px 4px 2px 0;">👑 ${n} · 관리자</span>`
+          : `<span style="display:inline-flex;align-items:center;background:#F1F5F9;color:var(--gray);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;margin:2px 4px 2px 0;">${n}</span>`
+      ).join("") : "";
+    }
   }
 
   function renderLandingScreen(){
@@ -561,7 +642,8 @@
         </div>
         <div style="margin-top:10px;">
           <div class="name-label">참석자 명단 (한 줄에 한 명씩, 첫 줄이 관리자)</div>
-          <textarea id="newMembersInput" rows="5" placeholder="예: 장원영" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;font-family:inherit;resize:none;">${d.newMembers}</textarea>
+          <textarea id="newMembersInput" rows="5" placeholder="예: 김태민" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;font-family:inherit;resize:none;">${d.newMembers}</textarea>
+          <div id="memberPreview" style="margin-top:6px;"></div>
           <div id="memberCount" class="helper" style="text-align:right;margin-top:4px;"></div>
         </div>
         <div style="margin-top:10px;">
@@ -570,9 +652,15 @@
         </div>
         <div style="margin-top:10px;">
           <div class="name-label">투표 가능 날짜 범위 (비워두면 제한 없음)</div>
-          <div style="display:flex;gap:8px;margin-top:4px;">
-            <input id="newDateStartInput" type="date" value="${d.dateStart}" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;" />
-            <input id="newDateEndInput" type="date" value="${d.dateEnd}" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;outline:none;" />
+          <div class="card" style="margin-top:6px;padding:14px;">
+            <div class="cal-header">
+              <button id="rangePrevMonth" type="button">‹</button>
+              <div class="cal-title" id="rangeCalTitle">${d.rangeCalYear}년 ${d.rangeCalMonth+1}월</div>
+              <button id="rangeNextMonth" type="button">›</button>
+            </div>
+            <div class="cal-grid" id="rangeCalGrid"></div>
+            <div class="cal-hint" id="rangeHint">${d.dateStart||d.dateEnd ? `선택됨: ${d.dateStart||"?"} ~ ${d.dateEnd||"(끝나는 날짜를 눌러주세요)"}` : "시작 날짜를 먼저 누르고, 끝나는 날짜를 눌러주세요."}</div>
+            ${(d.dateStart||d.dateEnd) ? `<button id="rangeResetBtn" type="button" class="refresh-link" style="margin-top:6px;">↺ 범위 초기화</button>` : ""}
           </div>
         </div>
         <div style="margin-top:10px;">
@@ -600,8 +688,14 @@
     });
     updateMemberCount();
     document.getElementById("newCodeInput").addEventListener("input", e=>{ state.landingDraft.newCode = e.target.value; });
-    document.getElementById("newDateStartInput").addEventListener("input", e=>{ state.landingDraft.dateStart = e.target.value; });
-    document.getElementById("newDateEndInput").addEventListener("input", e=>{ state.landingDraft.dateEnd = e.target.value; });
+    buildRangeCalendar();
+    document.getElementById("rangePrevMonth").addEventListener("click", ()=>shiftRangeMonth(-1));
+    document.getElementById("rangeNextMonth").addEventListener("click", ()=>shiftRangeMonth(1));
+    const rangeResetBtn = document.getElementById("rangeResetBtn");
+    if(rangeResetBtn) rangeResetBtn.addEventListener("click", ()=>{
+      state.landingDraft.dateStart = ""; state.landingDraft.dateEnd = "";
+      renderLandingScreen();
+    });
     document.getElementById("newHourStartInput").addEventListener("change", e=>{ state.landingDraft.hourStart = e.target.value; });
     document.getElementById("newHourEndInput").addEventListener("change", e=>{ state.landingDraft.hourEnd = e.target.value; });
     document.getElementById("joinBtn").addEventListener("click", ()=>{
@@ -613,8 +707,8 @@
       const title = document.getElementById("newTitleInput").value.trim();
       const membersRaw = document.getElementById("newMembersInput").value;
       const code = document.getElementById("newCodeInput").value.trim();
-      const dateStart = document.getElementById("newDateStartInput").value;
-      const dateEnd = document.getElementById("newDateEndInput").value;
+      const dateStart = state.landingDraft.dateStart;
+      const dateEnd = state.landingDraft.dateEnd;
       const hourStart = parseInt(document.getElementById("newHourStartInput").value, 10);
       const hourEnd = parseInt(document.getElementById("newHourEndInput").value, 10);
       const members = membersRaw.split("\n").map(s=>s.trim()).filter(Boolean);
@@ -644,7 +738,7 @@
       state.roomConfig = config;
       state.currentUser = "";
       state.screen = "vote";
-      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" };
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() };
       await loadAllVotes();
     }catch(e){
       state.loading=false;
@@ -683,7 +777,7 @@
       state.roomConfig = config;
       state.currentUser = "";
       state.screen = "created";
-      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21" };
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() };
       loadAllVotes();
     }catch(e){
       state.loading=false;
@@ -742,31 +836,56 @@
     if(!votedNames.length) return null;
     const combos = computeComboList();
     if(!combos.length) return null;
-    const top = combos[0];
-    const topRegion = regionCountsAmong(top.names)[0];
-    return `[일정 투표 현황] ${title}\n현재 1위: ${fmtLabel(top.date)}(${weekdayOf(top.date)}) ${top.time} · 가능 인원 ${top.count}명` +
-      (topRegion ? `\n선호 지역 1위: ${topRegion.region} (${topRegion.count}명)` : "") +
-      `\n\n아직 투표 안 하셨다면 참여해주세요: ${location.href}\n모임 코드: ${state.roomCode}`;
+    const medals = ["🥇","🥈","🥉"];
+    const top3 = combos.slice(0,3).map((c,i)=>{
+      const topRegion = regionCountsAmong(c.names)[0];
+      return `${medals[i]} ${i+1}순위: ${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time} · 가능 인원 ${c.count}명` +
+        (topRegion ? ` · 선호지역 ${topRegion.region}` : "");
+    }).join("\n");
+    return `[일정 투표 현황] ${title}\n${top3}\n\n아직 투표 안 하셨다면 참여해주세요: ${location.href}\n모임 코드: ${state.roomCode}`;
   }
 
-  async function doShare(text, feedbackEl){
+  async function handleSend(kind, btnEl){
+    let text;
+    if(kind==="invite") text = buildInviteText();
+    else if(kind==="finalized") text = buildFinalizedText();
+    else if(kind==="summary") text = buildSummaryText();
+    if(!text) return;
     const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
     if(navigator.share){
       try{
         await navigator.share({ title: "일정 투표 - " + title, text });
-        return true;
+        closeShareMenu();
+        return;
       }catch(e){
-        if(e && e.name === "AbortError") return false; // user cancelled the native share sheet
-        // fall through to clipboard fallback below
+        if(e && e.name === "AbortError") return; // user cancelled the OS app picker, keep the sheet open
+        // anything else (not supported, permission issue, etc.) -> fall through to the manual chooser below
       }
     }
-    const ok = await copyToClipboard(text);
-    if(feedbackEl){
-      const prev = feedbackEl.textContent;
-      feedbackEl.textContent = ok ? "✓ 복사됨!" : "복사 실패";
-      setTimeout(()=>{ if(document.body.contains(feedbackEl)) feedbackEl.textContent = prev; }, 1400);
-    }
-    return ok;
+    showFallbackChooser(btnEl, text);
+  }
+
+  function showFallbackChooser(btnEl, text){
+    const row = btnEl.closest(".pick-btn");
+    if(!row) return;
+    let fallback = row.querySelector(".fallback-row");
+    if(fallback){ fallback.remove(); return; } // tap again to collapse
+    const encoded = encodeURIComponent(text);
+    fallback = document.createElement("div");
+    fallback.className = "fallback-row";
+    fallback.style.cssText = "display:flex;gap:6px;margin-top:10px;width:100%;";
+    fallback.innerHTML = `
+      <a href="sms:?body=${encoded}" style="flex:1;text-align:center;background:#F1F5F9;color:var(--ink);font-size:11px;font-weight:700;padding:9px 0;border-radius:10px;text-decoration:none;">💬 문자</a>
+      <a href="mailto:?body=${encoded}" style="flex:1;text-align:center;background:#F1F5F9;color:var(--ink);font-size:11px;font-weight:700;padding:9px 0;border-radius:10px;text-decoration:none;">📧 메일</a>
+      <button type="button" class="fallback-copy" style="flex:1;background:#F1F5F9;color:var(--ink);font-size:11px;font-weight:700;padding:9px 0;border-radius:10px;border:none;cursor:pointer;">📋 복사</button>
+    `;
+    row.appendChild(fallback);
+    fallback.querySelector(".fallback-copy").addEventListener("click", async ()=>{
+      const ok = await copyToClipboard(text);
+      const copyBtn = fallback.querySelector(".fallback-copy");
+      copyBtn.textContent = ok ? "✓ 복사됨" : "복사 실패";
+      setTimeout(()=>{ if(document.body.contains(copyBtn)) copyBtn.textContent = "📋 복사"; }, 1400);
+    });
   }
 
   function closeShareMenu(){
@@ -778,6 +897,9 @@
     closeShareMenu();
     const hasFinalized = !!state.finalized;
     const hasVotes = Object.keys(state.allVotes).length > 0;
+    const sendBtn = (kind, enabled) => enabled
+      ? `<button type="button" class="share-send-btn" data-kind="${kind}">📤 보내기</button>`
+      : `<span style="color:var(--gray);font-size:11px;font-weight:700;">${kind==="finalized"?"아직 없음":"투표 없음"}</span>`;
     const overlay = document.createElement("div");
     overlay.id = "shareOverlay";
     overlay.style.cssText = "position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:1000;display:flex;align-items:flex-end;justify-content:center;";
@@ -785,31 +907,18 @@
       <div style="width:100%;max-width:460px;background:#fff;border-radius:20px 20px 0 0;padding:20px 18px 26px;">
         <div style="width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 16px;"></div>
         <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px;">무엇을 공유할까요?</div>
-        <button class="pick-btn" id="shareInviteBtn"><span>🔗 초대 링크 + 코드</span><span style="color:var(--gray);">›</span></button>
-        <button class="pick-btn" id="shareFinalizedBtn" ${hasFinalized?"":"disabled"} style="${hasFinalized?"":"opacity:.45;cursor:not-allowed;"}"><span>✅ 확정된 일정</span><span style="color:var(--gray);">${hasFinalized?"›":"(아직 없음)"}</span></button>
-        <button class="pick-btn" id="shareSummaryBtn" ${hasVotes?"":"disabled"} style="${hasVotes?"":"opacity:.45;cursor:not-allowed;"}"><span>📊 현재 결과 요약</span><span style="color:var(--gray);">${hasVotes?"›":"(투표 없음)"}</span></button>
+        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;"><span>🔗 초대 링크 + 코드</span>${sendBtn("invite", true)}</div>
+        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasFinalized?"":"opacity:.55;"}"><span>✅ 확정된 일정</span>${sendBtn("finalized", hasFinalized)}</div>
+        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasVotes?"":"opacity:.55;"}"><span>📊 현재 결과 요약 (1~3순위)</span>${sendBtn("summary", hasVotes)}</div>
         <button class="refresh-link" id="shareCancelBtn" style="width:100%;justify-content:center;margin-top:6px;padding:10px 0;">취소</button>
       </div>
     `;
     document.body.appendChild(overlay);
     overlay.addEventListener("click", (e)=>{ if(e.target===overlay) closeShareMenu(); });
     document.getElementById("shareCancelBtn").addEventListener("click", closeShareMenu);
-    document.getElementById("shareInviteBtn").addEventListener("click", async (e)=>{
-      await doShare(buildInviteText(), e.currentTarget.querySelector("span"));
-      setTimeout(closeShareMenu, 500);
+    overlay.querySelectorAll(".share-send-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>handleSend(btn.dataset.kind, btn));
     });
-    if(hasFinalized){
-      document.getElementById("shareFinalizedBtn").addEventListener("click", async (e)=>{
-        await doShare(buildFinalizedText(), e.currentTarget.querySelector("span"));
-        setTimeout(closeShareMenu, 500);
-      });
-    }
-    if(hasVotes){
-      document.getElementById("shareSummaryBtn").addEventListener("click", async (e)=>{
-        await doShare(buildSummaryText(), e.currentTarget.querySelector("span"));
-        setTimeout(closeShareMenu, 500);
-      });
-    }
   }
 
   function renderRoomCreatedScreen(){
@@ -1440,7 +1549,7 @@
       <div class="section-label">🗓 날짜 × 시간 히트맵</div>
       <div class="card">
         <div class="heatmap-wrap">
-          <div class="heatmap-hdr">${times.map(t=>`<div class="heatmap-hcell">${t.slice(0,2)}</div>`).join("")}</div>
+          <div class="heatmap-hdr"><div class="heatmap-date" style="background:#fff;"></div>${times.map(t=>`<div class="heatmap-hcell">${t.slice(0,2)}</div>`).join("")}</div>
           ${dateList.map(dk=>{
             const cells = times.map(t=>{
               const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
@@ -1550,6 +1659,55 @@
   }
 
   // ---------- ADMIN SCREEN ----------
+  // Looks at the current best (or finalized) date+time and finds anyone who is "one adjustment away"
+  // from making it work, so the admin gets a concrete, actionable suggestion instead of just raw numbers.
+  function computeSmartSuggestion(){
+    const members = (state.roomConfig && state.roomConfig.members) || [];
+    const votedNames = Object.keys(state.allVotes);
+    const total = members.length;
+    if(votedNames.length===0 || total===0) return null;
+
+    let refDate, refTime;
+    if(state.finalized){ refDate = state.finalized.date; refTime = state.finalized.time; }
+    else{
+      const combos = computeComboList();
+      if(combos.length===0) return null;
+      refDate = combos[0].date; refTime = combos[0].time;
+    }
+
+    const currentNames = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(refDate) && (state.allVotes[n].times||[]).includes(refTime));
+    const missingVoted = votedNames.filter(n => !currentNames.includes(n));
+    const missingNotVoted = members.filter(m => !votedNames.includes(m));
+
+    const nearMiss = missingVoted.map(n=>{
+      const v = state.allVotes[n];
+      const hasDate = (v.dates||[]).includes(refDate);
+      const hasTime = (v.times||[]).includes(refTime);
+      let gap = null;
+      if(hasDate && !hasTime) gap = "time";
+      else if(!hasDate && hasTime) gap = "date";
+      return { name: n, gap };
+    }).filter(c=>c.gap);
+
+    const pct = Math.round((currentNames.length/total)*100);
+    let suggestion;
+    if(currentNames.length===total){
+      suggestion = "이미 전원이 참여 가능한 최고의 일정이에요! 🎉";
+    }else if(nearMiss.length>0){
+      const pick = nearMiss[0];
+      const newCount = currentNames.length+1;
+      const newPct = Math.round((newCount/total)*100);
+      const gapLabel = pick.gap==="time" ? `${refTime} 외에 다른 시간도` : `${fmtLabel(refDate)} 외에 다른 날짜도`;
+      suggestion = `💡 <b>${pick.name}</b>님이 ${gapLabel} 가능하다면, 참여율이 ${currentNames.length}/${total}명(${pct}%) → ${newCount}/${total}명(${newPct}%)로 올라가요.`;
+    }else if(missingNotVoted.length>0){
+      suggestion = `아직 투표 안 한 ${missingNotVoted.join(", ")}님이 참여하면 더 정확한 결과를 볼 수 있어요.`;
+    }else{
+      suggestion = "현재로선 한 사람만 조정해서 참여율을 높일 뾰족한 방법은 안 보여요. 안 되는 분들의 일정이 서로 다른 날짜·시간과 겹쳐요.";
+    }
+
+    return { refDate, refTime, count: currentNames.length, total, pct, suggestion };
+  }
+
   function renderAdminScreen(){
     const body = document.getElementById("screen-body");
     if(!body) return;
@@ -1606,6 +1764,17 @@
       })()}
 
       <div class="section-label">개인별 응답 상세</div>
+      ${(() => {
+        const s = computeSmartSuggestion();
+        if(!s) return "";
+        return `
+          <div class="rec-card" style="margin-bottom:14px;">
+            <div class="rec-title" style="margin-bottom:8px;">📊 요약 & 추천</div>
+            <div class="rec-sub" style="font-size:12.5px;">현재 기준 일정: <b>${fmtLabel(s.refDate)}(${weekdayOf(s.refDate)}) ${s.refTime}</b> · 참여 ${s.count}/${s.total}명 (${s.pct}%)</div>
+            <div class="rec-sub" style="margin-top:8px;font-size:12.5px;line-height:1.5;">${s.suggestion}</div>
+          </div>
+        `;
+      })()}
       ${Object.entries(state.allVotes).map(([name,v])=>`
         <div class="detail-card">
           <div style="font-size:13px;font-weight:700;">${name}</div>
