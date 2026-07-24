@@ -15,7 +15,7 @@
   :root{
     --purple:#D97706; --purpleDark:#B45309; --terracotta:#D97706;
     --ivory:#F8FAFC; --ink:#111827; --line:#E5E7EB; --gray:#6B7280;
-    --green:#22C55E; --redbg:#FEF2F2; --red:#EF4444;
+    --green:#15803D; --redbg:#FEF2F2; --red:#EF4444; --onPrimary:#451A03;
     --primaryLight:#FEF3C7; --primaryDisabled:#FDE68A; --recCardBg:#FFFBEB;
     --warning:#EA580C; --warningBg:#FFF7ED; --warningText:#9A3412;
   }
@@ -26,7 +26,7 @@
   h1{font-size:22px;font-weight:800;margin:0 0 22px;line-height:1.35;letter-spacing:-.2px;}
   .tabs{display:flex;gap:4px;background:var(--primaryLight);padding:5px;border-radius:16px;margin-bottom:20px;}
   .tab{flex:1;padding:10px 0;border:none;background:transparent;border-radius:12px;font-size:13px;font-weight:700;color:var(--purpleDark);cursor:pointer;transition:.15s;}
-  .tab.active{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(217,119,6,.3);}
+  .tab.active{background:var(--purple);color:var(--onPrimary);box-shadow:0 2px 6px rgba(217,119,6,.3);}
   .card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);}
   .section-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:26px 0 12px;color:var(--ink);}
   .char-icon{width:20px;height:20px;flex:none;vertical-align:-5px;}
@@ -46,11 +46,11 @@
   .cal-day{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
   .cal-day.empty{visibility:hidden;cursor:default;}
   .cal-day.disabled{color:#CBD5E1;background:#F1F5F9;cursor:not-allowed;}
-  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 2px 6px rgba(217,119,6,.3);}
+  .cal-day.selected{background:var(--purple);color:var(--onPrimary);border-color:var(--purple);box-shadow:0 2px 6px rgba(217,119,6,.3);}
   .cal-hint{font-size:11px;color:var(--gray);margin-top:10px;}
   .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .quick-btn{padding:10px 0;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
-  .quick-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .quick-btn.active{background:var(--purple);color:var(--onPrimary);border-color:var(--purple);}
   .quick-hint{font-size:11px;color:var(--gray);margin-top:10px;}
 
   /* Time grid */
@@ -58,7 +58,7 @@
   .preset-btn{flex:1;padding:8px 0;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
   .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;touch-action:none;user-select:none;}
   .time-cell{padding:10px 0;border-radius:12px;border:1px solid var(--line);background:#fff;text-align:center;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;}
-  .time-cell.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+  .time-cell.active{background:var(--purple);color:var(--onPrimary);border-color:var(--purple);}
   .time-hint{font-size:11px;color:var(--gray);margin-top:10px;}
 
   /* Region map */
@@ -71,7 +71,7 @@
 
   textarea.memo{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-size:13px;color:var(--ink);resize:none;outline:none;font-family:inherit;}
 
-  .submit-btn{width:100%;margin-top:26px;padding:16px 0;border-radius:16px;border:none;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(217,119,6,.28);transition:.15s;}
+  .submit-btn{width:100%;margin-top:26px;padding:16px 0;border-radius:16px;border:none;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--purple);color:var(--onPrimary);box-shadow:0 4px 14px rgba(217,119,6,.28);transition:.15s;}
   .submit-btn:not(:disabled):hover{background:var(--purpleDark);}
   .submit-btn:disabled{background:var(--primaryDisabled);color:#fff;box-shadow:none;cursor:not-allowed;}
   .submit-btn.saved{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
@@ -87,19 +87,19 @@
   .stat-legend span{display:flex;align-items:center;gap:5px;}
   .stat-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none;}
   .ring-wrap{flex:none;text-align:center;}
-  .ring-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:17px;font-weight:800;color:var(--purple);}
+  .ring-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:17px;font-weight:800;color:var(--purpleDark);}
   .ring-caption{font-size:10px;color:var(--gray);margin-top:5px;}
   .rec-card{border-radius:16px;padding:18px;background:var(--recCardBg);margin-bottom:12px;}
   .rec-title{font-size:12px;color:var(--purpleDark);font-weight:800;margin-bottom:6px;}
   .rec-main{display:flex;align-items:baseline;gap:10px;}
   .rec-date{font-size:22px;font-weight:800;}
-  .rec-time{font-size:19px;font-weight:800;color:var(--purple);}
+  .rec-time{font-size:19px;font-weight:800;color:var(--purpleDark);}
   .rec-sub{font-size:12px;color:var(--gray);margin-top:4px;}
   .bar-row-wrap{margin-bottom:12px;}
   .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:2px;}
   .bar-names{font-size:11px;color:var(--gray);padding-left:28px;margin-top:-4px;}
   .bar-rank{width:16px;font-size:11px;font-weight:800;color:var(--gray);}
-  .bar-rank.top{color:var(--purple);}
+  .bar-rank.top{color:var(--purpleDark);}
   .bar-label{width:104px;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1.25;}
   .bar-track{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden;}
   .bar-fill{height:100%;border-radius:6px;background:var(--purple);}
@@ -121,7 +121,7 @@
   .voted{color:var(--green);font-size:12px;font-weight:700;}
   .notvoted{color:var(--warningText);font-size:12px;font-weight:700;}
   .detail-card{border-radius:14px;padding:12px 14px;border:1px solid var(--line);background:#fff;margin-bottom:8px;}
-  .refresh-link{background:none;border:none;color:var(--purple);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .refresh-link{background:none;border:none;color:var(--purpleDark);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;}
   .code-chip{background:var(--primaryLight);border:none;color:var(--purpleDark);font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:999px;}
   .admin-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .missing-box{margin-top:14px;padding:12px 14px;border-radius:14px;font-size:12px;background:var(--warningBg);color:var(--warningText);}
@@ -135,7 +135,7 @@
   .finalize-banner .s{color:#15803D;font-size:12px;margin-top:4px;}
   .pick-btn{width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;cursor:pointer;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
   .pick-btn.selected{border-color:var(--purple);background:var(--primaryLight);}
-  .share-send-btn{background:var(--purple);color:#fff;border:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;flex:none;}
+  .share-send-btn{background:var(--purple);color:var(--onPrimary);border:none;font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px;cursor:pointer;flex:none;}
   .share-send-btn:active{background:var(--purpleDark);}
   .cta-green{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
   .cta-green:hover{background:#16A34A;}
@@ -191,11 +191,11 @@
       <path d="M9.7 15.3 Q12 17 14.3 15.3" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/>
     </symbol>
     <symbol id="ci-check" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" fill="#22C55E"/>
+      <circle cx="12" cy="12" r="10" fill="#15803D"/>
       <circle cx="8.5" cy="11" r="1.9" fill="#fff"/>
       <circle cx="15.5" cy="11" r="1.9" fill="#fff"/>
-      <circle cx="9.15" cy="10.3" r="0.65" fill="#22C55E"/>
-      <circle cx="16.15" cy="10.3" r="0.65" fill="#22C55E"/>
+      <circle cx="9.15" cy="10.3" r="0.65" fill="#15803D"/>
+      <circle cx="16.15" cy="10.3" r="0.65" fill="#15803D"/>
       <path d="M8.5 15 Q12 17.6 15.5 15" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
     </symbol>
   </defs>
@@ -643,7 +643,7 @@
       const inRange = dateStart && dateEnd && key>dateStart && key<dateEnd;
       let cls = "cal-day";
       let style = "";
-      if(isStart || isEnd){ style = "background:var(--purple);color:#fff;border-color:var(--purple);"; }
+      if(isStart || isEnd){ style = "background:var(--purple);color:var(--onPrimary);border-color:var(--purple);"; }
       else if(inRange){ style = "background:var(--primaryLight);color:var(--purpleDark);border-color:var(--primaryLight);"; }
       html += `<div class="${cls}" data-key="${key}" style="${style}">${d}</div>`;
     }
@@ -1243,7 +1243,7 @@
             <button id="prevMonth">‹</button>
             <div style="text-align:center;">
               <div class="cal-title" id="calTitle">${state.calYear}년 ${state.calMonth+1}월</div>
-              <button id="goTodayBtn" type="button" style="background:none;border:none;color:var(--purple);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;">오늘로 가기</button>
+              <button id="goTodayBtn" type="button" style="background:none;border:none;color:var(--purpleDark);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;">오늘로 가기</button>
             </div>
             <button id="nextMonth">›</button>
           </div>
@@ -1769,13 +1769,13 @@
                 <span class="rec-time">${c.time}</span>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-                <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">👤 모두 가능한 인원 ${c.count}명</span>
-                <span style="background:#fff;border:1px solid var(--purple);color:var(--purple);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">📍 선호 지역 ${comboRegions.length}개</span>
+                <span style="background:#fff;border:1px solid var(--purple);color:var(--purpleDark);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">👤 모두 가능한 인원 ${c.count}명</span>
+                <span style="background:#fff;border:1px solid var(--purple);color:var(--purpleDark);font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;">📍 선호 지역 ${comboRegions.length}개</span>
               </div>
               <div class="rec-sub" style="margin-top:10px;">참여자: ${c.names.join(", ")}</div>
               <div class="rec-sub">선호 지역: ${comboRegions.length? comboRegions.slice(0,3).map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
             </div>
-            <button class="rec-toggle" id="rec-toggle-${i}" data-idx="${i}" type="button" style="background:none;border:none;color:var(--purple);font-size:18px;flex:none;cursor:pointer;padding:2px 4px;transition:transform .15s;">›</button>
+            <button class="rec-toggle" id="rec-toggle-${i}" data-idx="${i}" type="button" style="background:none;border:none;color:var(--purpleDark);font-size:18px;flex:none;cursor:pointer;padding:2px 4px;transition:transform .15s;">›</button>
           </div>
           <div id="rec-extra-${i}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(217,119,6,.15);">
             <div class="rec-sub" style="margin-top:0;"><b>지역 선호 전체</b> — ${comboRegions.length? comboRegions.map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
@@ -1811,7 +1811,7 @@
               const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
               const op = c===0 ? 1 : 0.25 + (c/heatMax)*0.75;
               const bg = c===0 ? "#FEF3C7" : "#D97706";
-              const col = c===0 ? "#FDE68A" : "#fff";
+              const col = c===0 ? "#92400E" : "#451A03";
               return `<div class="heatmap-cell" style="background:${bg};opacity:${op};color:${col};">${c>0?c:""}</div>`;
             }).join("");
             return `<div class="heatmap-row"><div class="heatmap-date">${fmtLabel(dk)}</div>${cells}</div>`;
@@ -1883,10 +1883,10 @@
       if(count === 0) return; // only plot regions that actually received votes
       anyVoted = true;
       const intensity = count / maxCount;
-      const bg = count === maxCount ? "#22C55E" : "#D97706";
+      const bg = count === maxCount ? "#15803D" : "#D97706";
       const icon = L.divIcon({
         className: "",
-        html: `<div style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;opacity:${0.55+intensity*0.45};">${shortRegionName(r.name)} ${count}명</div>`,
+        html: `<div style="display:flex;align-items:center;justify-content:center;background:${bg};color:${bg==='#D97706'?'#451A03':'#fff'};border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;opacity:${0.55+intensity*0.45};">${shortRegionName(r.name)} ${count}명</div>`,
         iconSize: null,
       });
       const marker = L.marker([r.lat, r.lng], { icon });
@@ -2014,7 +2014,7 @@
             ${combos.map((c,i)=>`
               <button class="pick-btn" data-date="${c.date}" data-time="${c.time}">
                 <span>${i+1}. ${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time}</span>
-                <span style="font-weight:800;color:var(--purple);">${c.count}명</span>
+                <span style="font-weight:800;color:var(--purpleDark);">${c.count}명</span>
               </button>
             `).join("")}
           </div>
