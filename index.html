@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --purple:#4F46E5; --purpleDark:#4338CA; --terracotta:#4F46E5;
@@ -213,7 +215,7 @@
     {name:"가평군", area:"경기", lat:37.8315, lng:127.5095},
     {name:"양평군", area:"경기", lat:37.4917, lng:127.4874},
   ];
-  const TODAY = new Date(2026,6,23); // 2026-07-23
+  const TODAY = (() => { const t = new Date(); t.setHours(0,0,0,0); return t; })(); // always the real "today", not a fixed date
   const DB_URL = "https://whencanwemeet-7e698-default-rtdb.firebaseio.com";
 
   const state = {
@@ -228,8 +230,8 @@
     saving: false,
     saved: false,
     error: "",
-    calYear: 2026,
-    calMonth: 7, // August (0-indexed)
+    calYear: TODAY.getFullYear(),
+    calMonth: TODAY.getMonth(),
     map: null,
     markers: {},
     quickActive: new Set(),
@@ -365,6 +367,26 @@
     }catch(e){
       state.error = "확정 취소에 실패했어요. 다시 시도해주세요. (" + (e && e.message || e) + ")";
       renderAdminScreen();
+    }
+  }
+
+  async function deleteRoom(){
+    const title = state.roomConfig ? state.roomConfig.title : "이 모임";
+    const sure = confirm(`"${title}" 모임을 완전히 삭제할까요?\n투표 데이터, 확정된 일정이 모두 지워지고 되돌릴 수 없어요.`);
+    if(!sure) return;
+    try{
+      const res = await fetch(`${DB_URL}/rooms/${state.roomCode}.json`, { method: "DELETE" });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      state.roomCode = null;
+      state.roomConfig = null;
+      state.currentUser = "";
+      state.allVotes = {};
+      state.finalized = null;
+      state.error = "";
+      alert("모임이 삭제됐어요.");
+      render();
+    }catch(e){
+      alert("삭제에 실패했어요. 다시 시도해주세요. (" + (e && e.message || e) + ")");
     }
   }
 
@@ -845,6 +867,84 @@
     return `[일정 투표 현황] ${title}\n${top3}\n\n아직 투표 안 하셨다면 참여해주세요: ${location.href}\n모임 코드: ${state.roomCode}`;
   }
 
+  async function captureResultsCanvas(){
+    const el = document.getElementById("resultsCapture");
+    if(!el || typeof html2canvas === "undefined") return null;
+    return await html2canvas(el, { backgroundColor: "#F8FAFC", scale: 2, useCORS: true });
+  }
+
+  function fileNameSafe(str){
+    return (str||"일정투표").replace(/[\\/:*?"<>|]/g,"").slice(0,40);
+  }
+
+  function triggerDownload(dataUrl, filename){
+    const a = document.createElement("a");
+    a.href = dataUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  async function saveResultsAsImage(btnEl){
+    const prev = btnEl.textContent;
+    btnEl.textContent = "저장 중...";
+    try{
+      const canvas = await captureResultsCanvas();
+      if(!canvas) throw new Error("캡처 실패");
+      const title = state.roomConfig ? state.roomConfig.title : "일정투표";
+      triggerDownload(canvas.toDataURL("image/png"), `${fileNameSafe(title)}_결과.png`);
+      btnEl.textContent = "✓ 저장됨!";
+    }catch(e){
+      btnEl.textContent = "저장 실패";
+    }
+    setTimeout(()=>{ if(document.body.contains(btnEl)) btnEl.textContent = prev; }, 1600);
+  }
+
+  async function saveResultsAsPDF(btnEl){
+    const prev = btnEl.textContent;
+    btnEl.textContent = "저장 중...";
+    try{
+      const canvas = await captureResultsCanvas();
+      if(!canvas || typeof window.jspdf === "undefined") throw new Error("캡처 실패");
+      const { jsPDF } = window.jspdf;
+      const imgW = canvas.width, imgH = canvas.height;
+      const pdf = new jsPDF({ orientation: imgH>imgW?"p":"l", unit: "px", format: [imgW, imgH] });
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
+      const title = state.roomConfig ? state.roomConfig.title : "일정투표";
+      pdf.save(`${fileNameSafe(title)}_결과.pdf`);
+      btnEl.textContent = "✓ 저장됨!";
+    }catch(e){
+      btnEl.textContent = "저장 실패";
+    }
+    setTimeout(()=>{ if(document.body.contains(btnEl)) btnEl.textContent = prev; }, 1600);
+  }
+
+  // Captures the results summary as an image and hands it to the OS share sheet directly
+  // (so apps like KakaoTalk receive the actual picture, not just text) when supported;
+  // otherwise falls back to just downloading the image so the person can share it manually.
+  async function shareResultsImage(btnEl){
+    const prev = btnEl ? btnEl.textContent : null;
+    if(btnEl) btnEl.textContent = "이미지 준비 중...";
+    try{
+      const canvas = await captureResultsCanvas();
+      if(!canvas) throw new Error("캡처 실패");
+      const title = state.roomConfig ? state.roomConfig.title : "일정 투표";
+      const blob = await new Promise(res=>canvas.toBlob(res, "image/png"));
+      const file = new File([blob], `${fileNameSafe(title)}_결과.png`, { type: "image/png" });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        await navigator.share({ title: "일정 투표 결과 - " + title, files: [file] });
+        if(btnEl) btnEl.textContent = prev;
+        closeShareMenu();
+        return;
+      }
+      // fallback: can't hand a file to a share sheet here, so just save it for manual sharing
+      triggerDownload(URL.createObjectURL(blob), `${fileNameSafe(title)}_결과.png`);
+      if(btnEl) btnEl.textContent = "✓ 이미지 저장됨 (직접 공유해주세요)";
+    }catch(e){
+      if(e && e.name === "AbortError"){ if(btnEl) btnEl.textContent = prev; return; }
+      if(btnEl) btnEl.textContent = "실패";
+    }
+    setTimeout(()=>{ if(btnEl && document.body.contains(btnEl)) btnEl.textContent = prev; }, 2200);
+  }
+
   async function handleSend(kind, btnEl){
     let text;
     if(kind==="invite") text = buildInviteText();
@@ -897,9 +997,10 @@
     closeShareMenu();
     const hasFinalized = !!state.finalized;
     const hasVotes = Object.keys(state.allVotes).length > 0;
-    const sendBtn = (kind, enabled) => enabled
-      ? `<button type="button" class="share-send-btn" data-kind="${kind}">📤 보내기</button>`
-      : `<span style="color:var(--gray);font-size:11px;font-weight:700;">${kind==="finalized"?"아직 없음":"투표 없음"}</span>`;
+    const canShareImage = state.screen === "results" && hasVotes;
+    const sendBtn = (kind, enabled, label) => enabled
+      ? `<button type="button" class="share-send-btn" data-kind="${kind}">📤 ${label||"보내기"}</button>`
+      : `<span style="color:var(--gray);font-size:11px;font-weight:700;">${kind==="finalized"?"아직 없음":kind==="image"?"결과보기 탭에서":"투표 없음"}</span>`;
     const overlay = document.createElement("div");
     overlay.id = "shareOverlay";
     overlay.style.cssText = "position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:1000;display:flex;align-items:flex-end;justify-content:center;";
@@ -910,6 +1011,7 @@
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;"><span>🔗 초대 링크 + 코드</span>${sendBtn("invite", true)}</div>
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasFinalized?"":"opacity:.55;"}"><span>✅ 확정된 일정</span>${sendBtn("finalized", hasFinalized)}</div>
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasVotes?"":"opacity:.55;"}"><span>📊 현재 결과 요약 (1~3순위)</span>${sendBtn("summary", hasVotes)}</div>
+        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${canShareImage?"":"opacity:.55;"}"><span>🖼️ 결과 요약 이미지</span>${sendBtn("image", canShareImage, "이미지로 보내기")}</div>
         <button class="refresh-link" id="shareCancelBtn" style="width:100%;justify-content:center;margin-top:6px;padding:10px 0;">취소</button>
       </div>
     `;
@@ -917,7 +1019,10 @@
     overlay.addEventListener("click", (e)=>{ if(e.target===overlay) closeShareMenu(); });
     document.getElementById("shareCancelBtn").addEventListener("click", closeShareMenu);
     overlay.querySelectorAll(".share-send-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>handleSend(btn.dataset.kind, btn));
+      btn.addEventListener("click", ()=>{
+        if(btn.dataset.kind === "image") shareResultsImage(btn);
+        else handleSend(btn.dataset.kind, btn);
+      });
     });
   }
 
@@ -1490,6 +1595,11 @@
 
     const medals = ["🥇","🥈","🥉"];
     body.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button id="saveImageBtn" class="preset-btn" style="flex:1;">📷 이미지 저장</button>
+        <button id="savePdfBtn" class="preset-btn" style="flex:1;">📄 PDF 저장</button>
+      </div>
+      <div id="resultsCapture" style="background:var(--ivory);">
       ${renderStatCard(votedNames.length, total)}
 
       <div class="section-label">📍 선호 지역</div>
@@ -1529,6 +1639,7 @@
         </div>
         `;
       }).join("")}
+      </div>
 
       <div class="section-label">📋 날짜·시간 조합별 가능 인원 (전체 ${comboList.length}개)</div>
       <div>${collapsibleSection("combo-list", comboList.map((c,i)=>barRow(`${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time}`, c.count, total, i, "var(--purple)", c.names)))}</div>
@@ -1575,6 +1686,8 @@
       });
     });
     ["combo-list","date-list","time-list","region-list"].forEach(wireCollapsible);
+    document.getElementById("saveImageBtn").addEventListener("click", (e)=>saveResultsAsImage(e.currentTarget));
+    document.getElementById("savePdfBtn").addEventListener("click", (e)=>saveResultsAsPDF(e.currentTarget));
   }
 
   function collapsibleSection(id, rowsHtml, visibleCount){
@@ -1784,13 +1897,20 @@
           ${v.memo?`<div style="font-size:11px;color:var(--purpleDark);margin-top:2px;">메모: ${v.memo}</div>`:""}
         </div>
       `).join("")}
+
+      <div class="section-label">위험 구역</div>
+      <div class="card" style="border-color:var(--redbg);">
+        <div class="name-label" style="margin-bottom:10px;">다 쓴 모임은 완전히 삭제할 수 있어요. 삭제하면 복구할 수 없어요.</div>
+        <button id="deleteRoomBtn" class="submit-btn" style="background:#fff;color:var(--red);border:1px solid var(--red);box-shadow:none;margin-top:0;">🗑 이 모임 삭제하기</button>
+      </div>
     `;
     document.getElementById("refreshBtn").addEventListener("click", loadAllVotes);
     const unfinalizeBtn = document.getElementById("unfinalizeBtn");
     if(unfinalizeBtn) unfinalizeBtn.addEventListener("click", unfinalizeSchedule);
-    document.querySelectorAll(".pick-btn").forEach(b=>{
+    body.querySelectorAll(".pick-btn").forEach(b=>{
       b.addEventListener("click", ()=>finalizeSchedule(b.dataset.date, b.dataset.time));
     });
+    document.getElementById("deleteRoomBtn").addEventListener("click", deleteRoom);
   }
 
   render();
