@@ -13,11 +13,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --purple:#4F46E5; --purpleDark:#4338CA; --terracotta:#4F46E5;
+    --purple:#D97706; --purpleDark:#B45309; --terracotta:#D97706;
     --ivory:#F8FAFC; --ink:#111827; --line:#E5E7EB; --gray:#6B7280;
     --green:#22C55E; --redbg:#FEF2F2; --red:#EF4444;
-    --primaryLight:#F3F4FF; --primaryDisabled:#C7D2FE; --recCardBg:#EEF2FF;
-    --warning:#F59E0B; --warningBg:#FFFBEB; --warningText:#92400E;
+    --primaryLight:#FEF3C7; --primaryDisabled:#FDE68A; --recCardBg:#FFFBEB;
+    --warning:#EA580C; --warningBg:#FFF7ED; --warningText:#9A3412;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--ivory);font-family:'Pretendard','Noto Sans KR',-apple-system,sans-serif;color:var(--ink);}
@@ -26,9 +26,10 @@
   h1{font-size:22px;font-weight:800;margin:0 0 22px;line-height:1.35;letter-spacing:-.2px;}
   .tabs{display:flex;gap:4px;background:var(--primaryLight);padding:5px;border-radius:16px;margin-bottom:20px;}
   .tab{flex:1;padding:10px 0;border:none;background:transparent;border-radius:12px;font-size:13px;font-weight:700;color:var(--purpleDark);cursor:pointer;transition:.15s;}
-  .tab.active{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(79,70,229,.3);}
+  .tab.active{background:var(--purple);color:#fff;box-shadow:0 2px 6px rgba(217,119,6,.3);}
   .card{background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);}
   .section-label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin:26px 0 12px;color:var(--ink);}
+  .char-icon{width:20px;height:20px;flex:none;vertical-align:-5px;}
   .section-label:first-child{margin-top:0;}
   select.name-select{width:100%;border:none;background:transparent;font-size:15px;font-weight:700;color:var(--ink);padding:4px 0 0;outline:none;}
   .name-label{font-size:12px;color:var(--gray);font-weight:600;}
@@ -45,7 +46,7 @@
   .cal-day{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
   .cal-day.empty{visibility:hidden;cursor:default;}
   .cal-day.disabled{color:#CBD5E1;background:#F1F5F9;cursor:not-allowed;}
-  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 2px 6px rgba(79,70,229,.3);}
+  .cal-day.selected{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 2px 6px rgba(217,119,6,.3);}
   .cal-hint{font-size:11px;color:var(--gray);margin-top:10px;}
   .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .quick-btn{padding:10px 0;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;color:var(--purpleDark);cursor:pointer;}
@@ -70,7 +71,7 @@
 
   textarea.memo{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-size:13px;color:var(--ink);resize:none;outline:none;font-family:inherit;}
 
-  .submit-btn{width:100%;margin-top:26px;padding:16px 0;border-radius:16px;border:none;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(79,70,229,.28);transition:.15s;}
+  .submit-btn{width:100%;margin-top:26px;padding:16px 0;border-radius:16px;border:none;font-weight:800;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--purple);color:#fff;box-shadow:0 4px 14px rgba(217,119,6,.28);transition:.15s;}
   .submit-btn:not(:disabled):hover{background:var(--purpleDark);}
   .submit-btn:disabled{background:var(--primaryDisabled);color:#fff;box-shadow:none;cursor:not-allowed;}
   .submit-btn.saved{background:var(--green);box-shadow:0 4px 14px rgba(34,197,94,.28);}
@@ -142,10 +143,71 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <symbol id="ci-calendar" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="16" rx="4" fill="#D97706"/>
+      <rect x="3" y="5" width="18" height="6" rx="4" fill="#B45309"/>
+      <rect x="7" y="2" width="2.6" height="5" rx="1.3" fill="#B45309"/>
+      <rect x="14.4" y="2" width="2.6" height="5" rx="1.3" fill="#B45309"/>
+      <circle cx="9" cy="15.5" r="2" fill="#fff"/>
+      <circle cx="15" cy="15.5" r="2" fill="#fff"/>
+      <circle cx="9.7" cy="14.8" r="0.7" fill="#D97706"/>
+      <circle cx="15.7" cy="14.8" r="0.7" fill="#D97706"/>
+      <path d="M9 19 Q12 21.3 15 19" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ci-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="13" r="9.5" fill="#D97706"/>
+      <rect x="10.5" y="1" width="3" height="4" rx="1.5" fill="#B45309"/>
+      <circle cx="8.5" cy="12" r="2" fill="#fff"/>
+      <circle cx="15.5" cy="12" r="2" fill="#fff"/>
+      <circle cx="9.2" cy="11.3" r="0.7" fill="#D97706"/>
+      <circle cx="16.2" cy="11.3" r="0.7" fill="#D97706"/>
+      <path d="M8.5 16.3 Q12 18.8 15.5 16.3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ci-pin" viewBox="0 0 24 24">
+      <path d="M12 2C7 2 3 6 3 11c0 7 9 11 9 11s9-4 9-11c0-5-4-9-9-9z" fill="#D97706"/>
+      <circle cx="9" cy="10.5" r="1.8" fill="#fff"/>
+      <circle cx="15" cy="10.5" r="1.8" fill="#fff"/>
+      <circle cx="9.6" cy="9.8" r="0.6" fill="#D97706"/>
+      <circle cx="15.6" cy="9.8" r="0.6" fill="#D97706"/>
+      <path d="M9.2 13.6 Q12 15.9 14.8 13.6" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ci-lock" viewBox="0 0 24 24">
+      <rect x="4" y="11" width="16" height="11" rx="3" fill="#D97706"/>
+      <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="#B45309" stroke-width="2.4" fill="none"/>
+      <circle cx="9" cy="16.5" r="1.8" fill="#fff"/>
+      <circle cx="15" cy="16.5" r="1.8" fill="#fff"/>
+      <circle cx="9.6" cy="15.8" r="0.6" fill="#D97706"/>
+      <circle cx="15.6" cy="15.8" r="0.6" fill="#D97706"/>
+      <path d="M9.2 19.5 Q12 21.5 14.8 19.5" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ci-star" viewBox="0 0 24 24">
+      <path d="M12 1.5l3.2 6.9 7.4.9-5.5 5.2 1.4 7.4L12 18l-6.5 3.9 1.4-7.4-5.5-5.2 7.4-.9z" fill="#D97706"/>
+      <circle cx="9.5" cy="12.5" r="1.5" fill="#fff"/>
+      <circle cx="14.5" cy="12.5" r="1.5" fill="#fff"/>
+      <circle cx="10" cy="11.9" r="0.5" fill="#D97706"/>
+      <circle cx="15" cy="11.9" r="0.5" fill="#D97706"/>
+      <path d="M9.7 15.3 Q12 17 14.3 15.3" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ci-check" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="#22C55E"/>
+      <circle cx="8.5" cy="11" r="1.9" fill="#fff"/>
+      <circle cx="15.5" cy="11" r="1.9" fill="#fff"/>
+      <circle cx="9.15" cy="10.3" r="0.65" fill="#22C55E"/>
+      <circle cx="16.15" cy="10.3" r="0.65" fill="#22C55E"/>
+      <path d="M8.5 15 Q12 17.6 15.5 15" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
 <div id="app" class="wrap"></div>
 
 <script>
 (function(){
+  function ci(type){
+    return `<svg class="char-icon" aria-hidden="true"><use href="#ci-${type}"></use></svg>`;
+  }
+
   function getTimes(){
     const cfg = state.roomConfig;
     const start = (cfg && Number.isInteger(cfg.hourStart)) ? cfg.hourStart : 10;
@@ -235,7 +297,7 @@
     map: null,
     markers: {},
     quickActive: new Set(),
-    landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() },
+    landingDraft: { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth(), allowedRegions: [] },
     pinInput: "",
     identityConfirmed: false,
     pinChangeMode: false,
@@ -511,11 +573,11 @@
       return;
     }
     let html = `
-      <div class="eyebrow">📅 일정 투표</div>
+      <div class="eyebrow">${ci("calendar")} 일정 투표</div>
       <h1>${state.roomConfig ? state.roomConfig.title : ""}</h1>
       ${state.finalized ? `
       <div class="finalize-banner">
-        <div class="t">✅ 확정된 일정</div>
+        <div class="t">${ci("check")} 확정된 일정</div>
         <div class="m">${fmtLabel(state.finalized.date)} (${weekdayOf(state.finalized.date)}) ${state.finalized.time}</div>
         ${(state.finalized.region || state.finalized.count) ? `<div class="s">${state.finalized.region?`📍 ${state.finalized.region}`:""}${(state.finalized.region && state.finalized.count)?" · ":""}${state.finalized.count?`👥 ${state.finalized.count}명`:""}</div>` : ""}
       </div>
@@ -645,8 +707,10 @@
 
   function renderLandingScreen(){
     const d = state.landingDraft;
+    const hasAdvancedData = !!(d.dateStart || d.dateEnd || d.hourStart!=="10" || d.hourEnd!=="21" || d.allowedRegions.length>0);
+    const advancedOpen = !!(d.advancedOpen || hasAdvancedData);
     app.innerHTML = `
-      <div class="eyebrow">📅 일정 투표 도구</div>
+      <div class="eyebrow">${ci("calendar")} 일정 투표 도구</div>
       <h1>모임 코드로 입장하거나<br/>새 모임을 만들어보세요</h1>
       ${state.error?`<div class="error-box">⚠️ ${state.error}</div>`:""}
       <div class="card">
@@ -672,6 +736,9 @@
           <div class="name-label">모임 코드 (영문/숫자, 참석자에게 공유할 코드)</div>
           <input id="newCodeInput" type="text" value="${d.newCode}" placeholder="예: hanjogo0803" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:4px;outline:none;" />
         </div>
+
+        <button type="button" id="advancedToggleBtn" class="refresh-link" style="margin-top:16px;">${advancedOpen?"▴ 고급 설정 (선택) 접기":"▾ 고급 설정 (선택) — 날짜·시간·지역 제한"}</button>
+        <div id="advancedSettings" style="display:${advancedOpen?"block":"none"};">
         <div style="margin-top:10px;">
           <div class="name-label">투표 가능 날짜 범위 (비워두면 제한 없음)</div>
           <div class="card" style="margin-top:6px;padding:14px;">
@@ -698,11 +765,37 @@
             <span style="color:var(--gray);font-size:12px;">까지</span>
           </div>
         </div>
+        <div style="margin-top:10px;">
+          <div class="name-label">투표 가능 지역 (선택 안 하면 전체 지역 허용)</div>
+          <div style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:4px;">
+            ${Object.entries(REGIONS.reduce((acc,r)=>{ (acc[r.area]=acc[r.area]||[]).push(r); return acc; }, {})).map(([area, list])=>`
+              <div style="font-size:11px;color:var(--gray);font-weight:700;margin:6px 0 4px;">${area}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">
+                ${list.map(r=>`
+                  <label style="display:flex;align-items:center;gap:4px;background:${d.allowedRegions.includes(r.name)?"var(--primaryLight)":"#F8FAFC"};border:1px solid ${d.allowedRegions.includes(r.name)?"var(--purple)":"var(--line)"};border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;color:${d.allowedRegions.includes(r.name)?"var(--purpleDark)":"var(--gray)"};cursor:pointer;">
+                    <input type="checkbox" class="region-restrict-check" data-region="${r.name}" ${d.allowedRegions.includes(r.name)?"checked":""} style="display:none;" />${r.name}
+                  </label>
+                `).join("")}
+              </div>
+            `).join("")}
+          </div>
+          <div id="regionRestrictHint" class="helper" style="margin-top:4px;">${d.allowedRegions.length ? `${d.allowedRegions.length}개 지역만 허용` : "전체 지역 허용"}</div>
+        </div>
+        </div>
         <button class="submit-btn" id="createBtn" style="margin-top:14px;">모임 만들기</button>
       </div>
       <div class="helper">모임을 만들면 코드가 생성돼요. 이 코드와 이 파일(또는 이 파일을 여는 방법)을 참석자에게 공유하면, 각자 코드를 입력해서 같은 모임에 투표할 수 있어요.</div>
     `;
     document.getElementById("joinCodeInput").addEventListener("input", e=>{ state.landingDraft.joinCode = e.target.value; });
+    document.getElementById("advancedToggleBtn").addEventListener("click", ()=>{
+      state.landingDraft.advancedOpen = !advancedOpen;
+      const box = document.getElementById("advancedSettings");
+      const btn = document.getElementById("advancedToggleBtn");
+      const nowOpen = state.landingDraft.advancedOpen;
+      box.style.display = nowOpen ? "block" : "none";
+      btn.textContent = nowOpen ? "▴ 고급 설정 (선택) 접기" : "▾ 고급 설정 (선택) — 날짜·시간·지역 제한";
+      if(nowOpen) buildRangeCalendar();
+    });
     document.getElementById("newTitleInput").addEventListener("input", e=>{ state.landingDraft.newTitle = e.target.value; });
     document.getElementById("newMembersInput").addEventListener("input", e=>{
       state.landingDraft.newMembers = e.target.value;
@@ -720,6 +813,21 @@
     });
     document.getElementById("newHourStartInput").addEventListener("change", e=>{ state.landingDraft.hourStart = e.target.value; });
     document.getElementById("newHourEndInput").addEventListener("change", e=>{ state.landingDraft.hourEnd = e.target.value; });
+    document.querySelectorAll(".region-restrict-check").forEach(cb=>{
+      cb.addEventListener("change", e=>{
+        const region = e.target.dataset.region;
+        const idx = state.landingDraft.allowedRegions.indexOf(region);
+        if(e.target.checked && idx<0) state.landingDraft.allowedRegions.push(region);
+        else if(!e.target.checked && idx>=0) state.landingDraft.allowedRegions.splice(idx,1);
+        const label = e.target.closest("label");
+        const on = e.target.checked;
+        label.style.background = on ? "var(--primaryLight)" : "#F8FAFC";
+        label.style.borderColor = on ? "var(--purple)" : "var(--line)";
+        label.style.color = on ? "var(--purpleDark)" : "var(--gray)";
+        const hint = document.getElementById("regionRestrictHint");
+        if(hint) hint.textContent = state.landingDraft.allowedRegions.length ? `${state.landingDraft.allowedRegions.length}개 지역만 허용` : "전체 지역 허용";
+      });
+    });
     document.getElementById("joinBtn").addEventListener("click", ()=>{
       const code = document.getElementById("joinCodeInput").value.trim();
       if(!code){ state.error="코드를 입력해주세요."; render(); return; }
@@ -739,8 +847,20 @@
       if(!/^[A-Za-z0-9가-힣_-]{2,40}$/.test(code)){ state.error="코드는 2~40자의 영문/숫자/한글로 입력해주세요."; render(); return; }
       if(dateStart && dateEnd && dateStart > dateEnd){ state.error="투표 가능 날짜의 시작일이 종료일보다 늦어요."; render(); return; }
       if(hourEnd <= hourStart){ state.error="투표 가능 시간의 종료 시각이 시작 시각보다 늦어야 해요."; render(); return; }
-      createRoom(code, title, members, dateStart, dateEnd, hourStart, hourEnd);
+      const allowedRegions = state.landingDraft.allowedRegions.slice();
+      createRoom(code, title, members, dateStart, dateEnd, hourStart, hourEnd, allowedRegions);
     });
+  }
+
+  // If the room restricts voting to a date range, open the calendar on the range's
+  // start month (otherwise a room set for e.g. August would open on "today"'s month
+  // with every single day disabled, which looks exactly like a broken calendar).
+  function initialCalMonth(cfg){
+    if(cfg && cfg.dateStart){
+      const [y,m] = cfg.dateStart.split("-").map(Number);
+      return { year: y, month: m-1 };
+    }
+    return { year: TODAY.getFullYear(), month: TODAY.getMonth() };
   }
 
   async function joinRoom(rawCode){
@@ -760,7 +880,9 @@
       state.roomConfig = config;
       state.currentUser = "";
       state.screen = "vote";
-      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() };
+      const icm = initialCalMonth(config);
+      state.calYear = icm.year; state.calMonth = icm.month;
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth(), allowedRegions: [] };
       await loadAllVotes();
     }catch(e){
       state.loading=false;
@@ -769,7 +891,7 @@
     }
   }
 
-  async function createRoom(rawCode, title, members, dateStart, dateEnd, hourStart, hourEnd){
+  async function createRoom(rawCode, title, members, dateStart, dateEnd, hourStart, hourEnd, allowedRegions){
     const code = rawCode.trim().toLowerCase();
     state.error=""; state.loading=true; render();
     try{
@@ -787,6 +909,7 @@
         dateEnd: dateEnd || null,
         hourStart: Number.isInteger(hourStart) ? hourStart : 10,
         hourEnd: Number.isInteger(hourEnd) ? hourEnd : 21,
+        allowedRegions: (allowedRegions && allowedRegions.length) ? allowedRegions : null,
         createdAt: new Date().toISOString(),
       };
       const res = await fetch(`${DB_URL}/rooms/${encodeURIComponent(code)}/config.json`, {
@@ -799,7 +922,9 @@
       state.roomConfig = config;
       state.currentUser = "";
       state.screen = "created";
-      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth() };
+      const icm = initialCalMonth(config);
+      state.calYear = icm.year; state.calMonth = icm.month;
+      state.landingDraft = { joinCode: "", newTitle: "", newMembers: "", newCode: "", dateStart: "", dateEnd: "", hourStart: "10", hourEnd: "21", rangeCalYear: TODAY.getFullYear(), rangeCalMonth: TODAY.getMonth(), allowedRegions: [] };
       loadAllVotes();
     }catch(e){
       state.loading=false;
@@ -1009,7 +1134,7 @@
         <div style="width:36px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 16px;"></div>
         <div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:14px;">무엇을 공유할까요?</div>
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;"><span>🔗 초대 링크 + 코드</span>${sendBtn("invite", true)}</div>
-        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasFinalized?"":"opacity:.55;"}"><span>✅ 확정된 일정</span>${sendBtn("finalized", hasFinalized)}</div>
+        <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasFinalized?"":"opacity:.55;"}"><span>${ci("check")} 확정된 일정</span>${sendBtn("finalized", hasFinalized)}</div>
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${hasVotes?"":"opacity:.55;"}"><span>📊 현재 결과 요약 (1~3순위)</span>${sendBtn("summary", hasVotes)}</div>
         <div class="pick-btn" style="cursor:default;flex-wrap:wrap;${canShareImage?"":"opacity:.55;"}"><span>🖼️ 결과 요약 이미지</span>${sendBtn("image", canShareImage, "이미지로 보내기")}</div>
         <button class="refresh-link" id="shareCancelBtn" style="width:100%;justify-content:center;margin-top:6px;padding:10px 0;">취소</button>
@@ -1031,7 +1156,7 @@
     const members = (state.roomConfig && state.roomConfig.members) || [];
     const shareText = `[일정 투표] ${title}\n아래 코드로 입장해서 투표해주세요!\n모임 코드: ${state.roomCode}`;
     app.innerHTML = `
-      <div class="eyebrow">📅 일정 투표 도구</div>
+      <div class="eyebrow">${ci("calendar")} 일정 투표 도구</div>
       <h1>모임이 만들어졌어요!</h1>
       <div class="card" style="text-align:center;">
         <div class="name-label">참석자에게 공유할 모임 코드</div>
@@ -1065,11 +1190,11 @@
         </select>
       </div>
       ${!nameChosen ? `<div class="helper" style="margin-top:10px;">먼저 이름을 선택하면 투표 항목이 나타나요.</div>` : ""}
-      ${nameChosen && alreadyVoted?`<div class="notice success">✅ 이미 투표하셨어요. 비밀번호를 확인하면 수정할 수 있어요.</div>`:""}
+      ${nameChosen && alreadyVoted?`<div class="notice success">${ci("check")} 이미 투표하셨어요. 비밀번호를 확인하면 수정할 수 있어요.</div>`:""}
       ${nameChosen ? `<div class="notice" style="background:#fff;border:1px solid var(--line);color:var(--gray);">📌 투표 가능 범위: ${(state.roomConfig&&state.roomConfig.dateStart)?state.roomConfig.dateStart:"제한 없음"} ~ ${(state.roomConfig&&state.roomConfig.dateEnd)?state.roomConfig.dateEnd:"제한 없음"} · ${String(state.roomConfig?state.roomConfig.hourStart:10).padStart(2,"0")}:00~${String(state.roomConfig?state.roomConfig.hourEnd:21).padStart(2,"0")}:00</div>` : ""}
       ${nameChosen ? `
       <div class="card" style="margin-top:10px;">
-        <div class="name-label">${getPinMode()==='verify' ? '🔒 비밀번호 입력 (다른 사람 투표를 보호해요)' : '🔒 비밀번호 만들기 (숫자 4자리)'}</div>
+        <div class="name-label">${getPinMode()==='verify' ? `${ci('lock')} 비밀번호 입력 (다른 사람 투표를 보호해요)` : `${ci('lock')} 비밀번호 만들기 (숫자 4자리)`}</div>
         <div style="display:flex;gap:6px;margin-top:6px;">
           <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" value="${state.pinInput}" placeholder="••••" style="flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:20px;letter-spacing:8px;outline:none;text-align:center;" />
           <button id="pinToggleBtn" type="button" class="preset-btn" style="width:56px;flex:none;">보기</button>
@@ -1095,7 +1220,7 @@
         ` : ""}
       </div>
       ` : ""}
-      ${nameChosen && !unlocked ? `<div class="helper lock-helper" style="margin-top:14px;">🔒 비밀번호를 올바르게 입력하면 투표 내용이 나타나요.</div>` : ""}
+      ${nameChosen && !unlocked ? `<div class="helper lock-helper" style="margin-top:14px;">${getPinMode()==='verify' ? `${ci('lock')} 비밀번호를 올바르게 입력하면 투표 내용이 나타나요.` : `${ci('lock')} 위의 "본인이 맞습니다" 체크박스를 눌러야 투표 내용이 나타나요.`}</div>` : ""}
 
       ${nameChosen && unlocked ? `
       <div id="voteFormBody">
@@ -1112,18 +1237,21 @@
           <div class="quick-hint">이번 달 달력에서 해당 요일을 자동으로 체크하고, 시간대도 같이 선택돼요.</div>
         </div>
 
-        <div class="section-label">📅 가능한 날짜 (달력에서 복수 선택)</div>
+        <div class="section-label">${ci("calendar")} 가능한 날짜 (달력에서 복수 선택)</div>
         <div class="card">
           <div class="cal-header">
             <button id="prevMonth">‹</button>
-            <div class="cal-title" id="calTitle">${state.calYear}년 ${state.calMonth+1}월</div>
+            <div style="text-align:center;">
+              <div class="cal-title" id="calTitle">${state.calYear}년 ${state.calMonth+1}월</div>
+              <button id="goTodayBtn" type="button" style="background:none;border:none;color:var(--purple);font-size:11px;font-weight:700;cursor:pointer;padding:2px 0;">오늘로 가기</button>
+            </div>
             <button id="nextMonth">›</button>
           </div>
           <div class="cal-grid" id="calGrid"></div>
           <div class="cal-hint">선택됨: ${state.draft.dates.length===0?"없음":state.draft.dates.map(d=>fmtLabel(d)).join(", ")}</div>
         </div>
 
-        <div class="section-label">🕒 가능한 시간 (드래그해서 여러 개 선택)</div>
+        <div class="section-label">${ci("clock")} 가능한 시간 (드래그해서 여러 개 선택)</div>
         <div class="card">
           <div class="time-presets">
             <button class="preset-btn" data-preset="morning">오전 10-13</button>
@@ -1137,11 +1265,11 @@
           <div class="time-hint">칸을 누른 채로 드래그하면 한번에 여러 시간을 선택/해제할 수 있어요.</div>
         </div>
 
-        <div class="section-label">📍 희망 지역 (지도에서 여러 곳 선택 가능)</div>
+        <div class="section-label">${ci("pin")} 희망 지역 (지도에서 여러 곳 선택 가능)</div>
         <div class="card">
           <div id="mapbox"></div>
           <div class="region-picked">${state.draft.regions.length? `선택됨: ${state.draft.regions.join(", ")}` : "지도의 마커를 눌러 지역을 선택해주세요"}</div>
-          <div class="region-hint">여러 지역을 동시에 선택할 수 있고, 선택한 마커를 한 번 더 누르면 선택이 취소돼요.</div>
+          <div class="region-hint">여러 지역을 동시에 선택할 수 있고, 선택한 마커를 한 번 더 누르면 선택이 취소돼요.${(state.roomConfig&&state.roomConfig.allowedRegions&&state.roomConfig.allowedRegions.length)?` 이 모임은 ${state.roomConfig.allowedRegions.length}개 지역만 선택 가능해요.`:""}</div>
         </div>
 
         <div class="section-label">✏️ 메모 (선택)</div>
@@ -1254,6 +1382,7 @@
 
     document.getElementById("prevMonth").addEventListener("click", ()=>{ shiftMonth(-1); });
     document.getElementById("nextMonth").addEventListener("click", ()=>{ shiftMonth(1); });
+    document.getElementById("goTodayBtn").addEventListener("click", goToToday);
     document.getElementById("memoInput").addEventListener("input", e=>{ state.draft.memo = e.target.value; });
     document.getElementById("submitBtn").addEventListener("click", submitVote);
     document.querySelectorAll(".preset-btn").forEach(b=>b.addEventListener("click", ()=>applyPreset(b.dataset.preset)));
@@ -1344,6 +1473,16 @@
     refreshQuickButtons();
   }
 
+  function goToToday(){
+    state.calYear = TODAY.getFullYear();
+    state.calMonth = TODAY.getMonth();
+    const title = document.getElementById("calTitle");
+    if(title) title.textContent = `${state.calYear}년 ${state.calMonth+1}월`;
+    state.quickActive.clear();
+    buildCalendar();
+    refreshQuickButtons();
+  }
+
   function isDateSelectable(dateObj){
     if(dateObj < TODAY) return false;
     const cfg = state.roomConfig;
@@ -1371,7 +1510,9 @@
       const dateObj = new Date(y,m,d);
       const isPast = !isDateSelectable(dateObj);
       const selected = state.draft.dates.includes(key);
-      html += `<div class="cal-day ${isPast?"disabled":""} ${selected?"selected":""}" data-key="${key}" data-past="${isPast}">${d}</div>`;
+      const isToday = dateObj.getTime() === TODAY.getTime();
+      const todayStyle = isToday ? `box-shadow:inset 0 0 0 2px ${selected?'#fff':'var(--purple)'};` : "";
+      html += `<div class="cal-day ${isPast?"disabled":""} ${selected?"selected":""}" data-key="${key}" data-past="${isPast}" style="${todayStyle}">${d}</div>`;
     }
     grid.innerHTML = html;
     grid.querySelectorAll(".cal-day:not(.empty):not(.disabled)").forEach(cell=>{
@@ -1468,8 +1609,8 @@
     const makeIcon = (isSelected, name) => L.divIcon({
       className: "",
       html: `<div style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <div style="width:${isSelected?14:10}px;height:${isSelected?14:10}px;border-radius:50%;background:${isSelected?'#4F46E5':'#94A3B8'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);flex:none;"></div>
-        <div style="background:#fff;border:1px solid ${isSelected?'#4F46E5':'var(--line)'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:${isSelected?'#4F46E5':'var(--ink)'};box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;">${name}</div>
+        <div style="width:${isSelected?14:10}px;height:${isSelected?14:10}px;border-radius:50%;background:${isSelected?'#D97706':'#94A3B8'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35);flex:none;"></div>
+        <div style="background:#fff;border:1px solid ${isSelected?'#D97706':'var(--line)'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:${isSelected?'#D97706':'var(--ink)'};box-shadow:0 1px 2px rgba(0,0,0,.12);white-space:nowrap;">${name}</div>
       </div>`,
       iconSize: [110, 20], iconAnchor: [7, 10],
     });
@@ -1478,15 +1619,19 @@
       ? L.markerClusterGroup({ maxClusterRadius: 40, spiderfyOnMaxZoom: true, disableClusteringAtZoom: 12 })
       : L.layerGroup();
 
+    const cfg = state.roomConfig;
+    const allowedSet = (cfg && cfg.allowedRegions && cfg.allowedRegions.length) ? new Set(cfg.allowedRegions) : null;
+    const visibleRegions = allowedSet ? REGIONS.filter(r=>allowedSet.has(r.name)) : REGIONS;
+
     state.markers = {};
-    REGIONS.forEach(r=>{
+    visibleRegions.forEach(r=>{
       const isSelected = state.draft.regions.includes(r.name);
       const marker = L.marker([r.lat, r.lng], { icon: makeIcon(isSelected, r.name) });
       marker.on("click", ()=>{
         const idx = state.draft.regions.indexOf(r.name);
         if(idx>=0) state.draft.regions.splice(idx,1); else state.draft.regions.push(r.name);
         state.saved = false;
-        REGIONS.forEach(rr=>{
+        visibleRegions.forEach(rr=>{
           const m = state.markers[rr.name];
           if(m) m.setIcon(makeIcon(state.draft.regions.includes(rr.name), rr.name));
         });
@@ -1523,7 +1668,7 @@
           <div style="position:relative;width:78px;height:78px;">
             <svg width="78" height="78" viewBox="0 0 78 78">
               <circle cx="39" cy="39" r="${r}" fill="none" stroke="#E5E7EB" stroke-width="7"/>
-              <circle cx="39" cy="39" r="${r}" fill="none" stroke="#4F46E5" stroke-width="7" stroke-linecap="round"
+              <circle cx="39" cy="39" r="${r}" fill="none" stroke="#D97706" stroke-width="7" stroke-linecap="round"
                 stroke-dasharray="${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 39 39)"/>
             </svg>
             <div class="ring-pct">${pct}%</div>
@@ -1602,13 +1747,13 @@
       <div id="resultsCapture" style="background:var(--ivory);">
       ${renderStatCard(votedNames.length, total)}
 
-      <div class="section-label">📍 선호 지역</div>
+      <div class="section-label">${ci("pin")} 선호 지역</div>
       <div class="rec-card" style="margin-bottom:14px;">
         <div class="rec-sub">${allRegionCounts.filter(r=>r.count>0).length===0 ? "아직 선택된 지역이 없어요." : allRegionCounts.filter(r=>r.count>0).slice(0,5).map((r,i)=>`${i+1}위 ${r.region} ${r.count}명`).join(" · ")}</div>
       </div>
 
       <div class="section-label" style="justify-content:space-between;">
-        <span>⭐ 추천 일정 (1~3순위)</span>
+        <span>${ci("star")} 추천 일정 (1~3순위)</span>
         <span style="font-size:11px;color:var(--gray);font-weight:600;">❓ 추천 기준: 가장 많이 겹치는 순</span>
       </div>
       ${topCombos.length===0 ? `<div class="rec-card"><div class="rec-sub">겹치는 날짜·시간이 아직 없어요.</div></div>` : topCombos.map((c,i)=>{
@@ -1632,7 +1777,7 @@
             </div>
             <button class="rec-toggle" id="rec-toggle-${i}" data-idx="${i}" type="button" style="background:none;border:none;color:var(--purple);font-size:18px;flex:none;cursor:pointer;padding:2px 4px;transition:transform .15s;">›</button>
           </div>
-          <div id="rec-extra-${i}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(79,70,229,.15);">
+          <div id="rec-extra-${i}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(217,119,6,.15);">
             <div class="rec-sub" style="margin-top:0;"><b>지역 선호 전체</b> — ${comboRegions.length? comboRegions.map(r=>`${r.region} ${r.count}명`).join(", ") : "선택 없음"}</div>
             <div class="rec-sub">${notAvailable.length ? `<b>이 시간에 안 되는 사람</b> — ${notAvailable.join(", ")}` : "전원 참여 가능한 일정이에요."}</div>
           </div>
@@ -1644,13 +1789,13 @@
       <div class="section-label">📋 날짜·시간 조합별 가능 인원 (전체 ${comboList.length}개)</div>
       <div>${collapsibleSection("combo-list", comboList.map((c,i)=>barRow(`${fmtLabel(c.date)}(${weekdayOf(c.date)}) ${c.time}`, c.count, total, i, "var(--purple)", c.names)))}</div>
 
-      <div class="section-label">📅 날짜별 가능 인원 (전체 ${dateCounts.length}개)</div>
+      <div class="section-label">${ci("calendar")} 날짜별 가능 인원 (전체 ${dateCounts.length}개)</div>
       <div>${collapsibleSection("date-list", dateCounts.map((d,i)=>barRow(`${d.label}(${d.wd})`, d.count, total, i, "var(--purple)", d.names)))}</div>
 
-      <div class="section-label">🕒 시간대별 가능 인원 (전체 ${timeCounts.length}개)</div>
+      <div class="section-label">${ci("clock")} 시간대별 가능 인원 (전체 ${timeCounts.length}개)</div>
       <div>${collapsibleSection("time-list", timeCounts.map((t,i)=>barRow(t.time, t.count, total, i, "var(--terracotta)", t.names)))}</div>
 
-      <div class="section-label">📍 지역별 득표 (지도에서 바로 확인)</div>
+      <div class="section-label">${ci("pin")} 지역별 득표 (지도에서 바로 확인)</div>
       <div class="card">
         <div id="resultMapbox"></div>
       </div>
@@ -1665,8 +1810,8 @@
             const cells = times.map(t=>{
               const c = votedNames.filter(n => (state.allVotes[n].dates||[]).includes(dk) && (state.allVotes[n].times||[]).includes(t)).length;
               const op = c===0 ? 1 : 0.25 + (c/heatMax)*0.75;
-              const bg = c===0 ? "#F3F4FF" : "#4F46E5";
-              const col = c===0 ? "#C7D2FE" : "#fff";
+              const bg = c===0 ? "#FEF3C7" : "#D97706";
+              const col = c===0 ? "#FDE68A" : "#fff";
               return `<div class="heatmap-cell" style="background:${bg};opacity:${op};color:${col};">${c>0?c:""}</div>`;
             }).join("");
             return `<div class="heatmap-row"><div class="heatmap-date">${fmtLabel(dk)}</div>${cells}</div>`;
@@ -1738,7 +1883,7 @@
       if(count === 0) return; // only plot regions that actually received votes
       anyVoted = true;
       const intensity = count / maxCount;
-      const bg = count === maxCount ? "#22C55E" : "#4F46E5";
+      const bg = count === maxCount ? "#22C55E" : "#D97706";
       const icon = L.divIcon({
         className: "",
         html: `<div style="display:flex;align-items:center;justify-content:center;background:${bg};color:#fff;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);border:2px solid #fff;opacity:${0.55+intensity*0.45};">${shortRegionName(r.name)} ${count}명</div>`,
@@ -1829,7 +1974,7 @@
     if(state.currentUser !== adminName){
       body.innerHTML = `
         <div class="card gate">
-          <div style="font-size:26px;">🔒</div>
+          <svg class="char-icon" style="width:44px;height:44px;" aria-hidden="true"><use href="#ci-lock"></use></svg>
           <div class="t">${adminName||"관리자"}님만 볼 수 있는 화면입니다.</div>
           <div class="s">투표 화면에서 내 이름을 '${adminName||"-"}'(으)로 선택하면 볼 수 있어요.</div>
         </div>
@@ -1854,7 +1999,7 @@
       <div class="section-label">일정 확정하기</div>
       ${state.finalized ? `
         <div class="finalize-banner">
-          <div class="t">✅ 확정된 일정</div>
+          <div class="t">${ci("check")} 확정된 일정</div>
           <div class="m">${fmtLabel(state.finalized.date)} (${weekdayOf(state.finalized.date)}) ${state.finalized.time}</div>
           ${(state.finalized.region || state.finalized.count) ? `<div class="s">${state.finalized.region?`📍 ${state.finalized.region}`:""}${(state.finalized.region && state.finalized.count)?" · ":""}${state.finalized.count?`👥 ${state.finalized.count}명`:""}</div>` : ""}
           <div class="s">모든 화면 상단에 이 일정이 참석자들에게 표시돼요.</div>
